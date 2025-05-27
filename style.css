@@ -230,6 +230,93 @@ footer p {
   font-size: 0.95rem;
 }
 
+.login-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  background-color: #f2f2f2; /* Fond gris clair pour contraster */
+  min-height: 70vh; 
+}
+
+.login-container {
+  background-color: #ffffff;
+  padding: 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.login-container h2 {
+  color: #0a7abf; /* Couleur principale du site */
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  box-sizing: border-box; /* S'assure que le padding n'augmente pas la largeur */
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #0a7abf;
+}
+
+.login-button {
+  width: 100%;
+  padding: 15px;
+  background-color: #0a7abf;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #075c92;
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+}
+
+.login-footer a {
+  color: #0a7abf;
+  text-decoration: none;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
+}
+
+.login-footer p {
+  margin-top: 1rem;
+  color: #777;
+}
+
 /* RESPONSIVE DESIGN */
 @media screen and (max-width: 768px) {
   .hero h1 {
@@ -259,4 +346,11 @@ footer p {
     order: 1;
     height: 80px;
   }
+
+  /* =================================== */
+/* STYLES POUR LA PAGE DE CONNEXION    */
+/* AJOUTEZ CE BLOC À VOTRE FICHIER CSS */
+/* =================================== */
+
+
 }

@@ -1,13 +1,14 @@
 <!DOCTYPE html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Medicare</title>
+  <title>Connexion - Medicare</title>
   <link rel="icon" type="image/png" href="medicare_logo.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 
- <body>
+<body>
 
   <header>
     <div class="header-container">
@@ -32,38 +33,26 @@
     </nav>    
   </header>
 
-  <div class="search-box">
-    <input type="text" placeholder="Recherche..." />
-  </div>
-
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Welcome to Medical Services You Can Trust</h1>
-      <p>Votre santé est notre priorité. Prenez rendez-vous dès maintenant avec l’un de nos spécialistes.</p>
-      <div class="hero-buttons">
-        <a href="#">Prendre RDV</a>
-        <a href="#">Voir Emploi du Temps</a>
+  <main class="login-main">
+    <div class="login-container">
+      <h2>Connexion à votre compte</h2>
+      <form action="#" method="post">
+        <div class="form-group">
+          <label for="email">Adresse E-mail</label>
+          <input type="email" id="email" name="email" placeholder="Entrez votre e-mail" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
+        </div>
+        <button type="submit" class="login-button">Se connecter</button>
+      </form>
+      <div class="login-footer">
+        <a href="#">Mot de passe oublié ?</a>
+        <p>Pas de compte ? <a href="#">Inscrivez-vous</a></p>
       </div>
     </div>
-  </section>
-
-  <section class="info-section">
-    <div class="info-card">
-      <h3>Urgence</h3>
-      <p>Appelez-nous immédiatement pour toute urgence médicale 24/7.</p>
-      <p><strong>+33 1 23 45 67 89</strong></p>
-      <a href="#">En savoir plus</a>
-    </div>
-    <div class="info-card">
-      <h3>Emploi dUu temps</h3>
-      <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p>
-      <a href="#">Voir les horaires</a>
-    </div>
-    <div class="info-card">
-      <h3>Horaires d'ouverture</h3>
-      <p>Lundi - Vendredi : 8h00 - 17h00<br>Samedi : 09h00 - 14h00<br>Dimanche : 08h00 - 12h00<br>Fermé les jours fériés</p>
-    </div>
-  </section>
+  </main>
 
   <footer>
     <p>Contactez-nous : contact@medicare.omnes</p>
@@ -74,5 +63,4 @@
   </footer>
 
 </body>
-
 </html>

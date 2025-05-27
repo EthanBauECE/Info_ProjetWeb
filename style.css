@@ -52,23 +52,40 @@ nav ul li {
 
 nav a {
   text-decoration: none;
-  color: #0e0c0c;
+  color: #ffffff;
   font-weight: 500;
   padding: 8px 12px;
 }
 
 /* DROPDOWN MENU */
+/* Ensure dropdown parent has proper positioning */
+nav ul li.dropdown {
+  position: relative;
+}
+
+/* Basic hidden state */
 .dropdown-menu {
   display: none;
   position: absolute;
-  background-color: #ffffff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   top: 100%;
   left: 0;
-  min-width: 180px;
-  z-index: 999;
-  padding: 0.5rem 0;
-  border-radius: 6px;
+  min-width: 200px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* Show dropdown when hovering on li (including its submenu) */
+nav ul li.dropdown:hover > .dropdown-menu {
+  display: block;
+}
+
+/* Prevent closing too fast by ensuring vertical stacking */
+.dropdown-menu li {
+  width: 100%;
 }
 
 .dropdown-menu li a {
@@ -83,10 +100,12 @@ nav a {
   background-color: #f2f2f2;
 }
 
-nav ul li.dropdown:hover .dropdown-menu {
-  display: block;
+/* Avoid accidental close when hovering between items */
+nav ul li.dropdown {
+  padding-bottom: 0.5rem;
 }
 
+/* SEARCH BOX */
 .search-box {
   background: rgba(255, 255, 255, 0.9);
   margin: 1rem auto;
@@ -106,6 +125,42 @@ nav ul li.dropdown:hover .dropdown-menu {
   color: #333;
 }
 
+.search-box {
+  margin: 40px auto;
+  max-width: 300px;
+}
+
+.search-box input[type="text"] {
+  width: 70%;
+  padding: 8px;
+  border: 2px solid #aaa;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.search-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  font-size: 1.4rem;
+}
+
+.search-box button {
+  margin-top: 20px;
+  padding: 10px 24px;
+  background-color: #33aaff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.search-box button:hover {
+  background-color: #2288dd;
+}
+
+/* HERO SECTION */
 .hero {
   background: url('fond.png') center/cover no-repeat;
   height: 90vh;
@@ -159,6 +214,7 @@ nav ul li.dropdown:hover .dropdown-menu {
   background-color: #075c92;
 }
 
+/* INFO SECTION */
 .info-section {
   display: flex;
   flex-wrap: wrap;
@@ -192,6 +248,7 @@ nav ul li.dropdown:hover .dropdown-menu {
   text-decoration: none;
 }
 
+/* FOOTER */
 footer {
   background-color: #0a7abf;
   color: white;
@@ -208,6 +265,7 @@ footer p {
   font-size: 0.95rem;
 }
 
+/* RESPONSIVE DESIGN */
 @media screen and (max-width: 768px) {
   .hero h1 {
     font-size: 2.2rem;
@@ -236,4 +294,86 @@ footer p {
     order: 1;
     height: 80px;
   }
+}
+
+/* RENDEZ-VOUS */
+.rdv-container {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.rdv-box {
+  display: flex;
+  background-color: #d5ebff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 80%;
+  max-width: 600px;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.rdv-photo {
+  text-align: center;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.rdv-photo img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.rdv-photo p {
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.rdv-details {
+  flex-grow: 1;
+  padding-left: 20px;
+  text-align: left;
+}
+
+.rdv-details h2 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: #0a7abf;
+}
+
+.rdv-details p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+.btn-annuler {
+  background-color: #33aaff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.3s;
+}
+
+.btn-annuler:hover {
+  background-color: #2288dd;
+}
+
+.past-label {
+  display: inline-block;
+  margin-top: 10px;
+  background-color: #cccccc;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.95rem;
 }

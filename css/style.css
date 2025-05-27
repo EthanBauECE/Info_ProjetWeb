@@ -512,3 +512,44 @@ footer p {
     height: 80px;
   }
 }
+
+
+
+
+/* ========================================================= */
+/* STYLE POUR L'ÉCRITURE "CONNEXION" ET LE NOM UTILISATEUR  */
+/* ========================================================= */
+
+/* Le style du conteneur ne change pas */
+.account-icon {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    padding: 5px; /* Un peu d'espace autour */
+}
+
+/* On cible directement le texte par sa nouvelle classe .account-text */
+.account-text {
+    color: #ffffff;
+    margin-left: 10px;      /* Espace entre l'icône et le texte */
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+
+/* ========================================================= */
+/* STYLE POUR L'ÉCRITURE "SE DÉCONNECTER"               */
+/* ========================================================= */
+
+/* On cible directement le lien de déconnexion par sa nouvelle classe */
+.logout-link {
+    /* Applique une transition douce pour le survol */
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Style au survol pour le lien de déconnexion */
+.logout-link:hover {
+    color: #d32f2f;            /* Texte en rouge pour signifier une action importante */
+    background-color: #ffebee; /* Fond rouge très clair */
+    font-weight: bold;         /* Texte en gras pour le faire ressortir */
+}

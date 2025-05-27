@@ -52,7 +52,7 @@ nav ul li {
 
 nav a {
   text-decoration: none;
-  color: #0e0c0c;
+  color: #ffffff;
   font-weight: 500;
   padding: 8px 12px;
 }
@@ -123,6 +123,41 @@ nav ul li.dropdown {
   font-size: 1rem;
   outline: none;
   color: #333;
+}
+
+.search-box {
+  margin: 40px auto;
+  max-width: 300px;
+}
+
+.search-box input[type="text"] {
+  width: 70%;
+  padding: 8px;
+  border: 2px solid #aaa;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.search-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  font-size: 1.4rem;
+}
+
+.search-box button {
+  margin-top: 20px;
+  padding: 10px 24px;
+  background-color: #33aaff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.search-box button:hover {
+  background-color: #2288dd;
 }
 
 /* HERO SECTION */
@@ -353,4 +388,86 @@ footer p {
 /* =================================== */
 
 
+}
+
+/* RENDEZ-VOUS */
+.rdv-container {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.rdv-box {
+  display: flex;
+  background-color: #d5ebff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 80%;
+  max-width: 600px;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.rdv-photo {
+  text-align: center;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.rdv-photo img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.rdv-photo p {
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.rdv-details {
+  flex-grow: 1;
+  padding-left: 20px;
+  text-align: left;
+}
+
+.rdv-details h2 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: #0a7abf;
+}
+
+.rdv-details p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+.btn-annuler {
+  background-color: #33aaff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.3s;
+}
+
+.btn-annuler:hover {
+  background-color: #2288dd;
+}
+
+.past-label {
+  display: inline-block;
+  margin-top: 10px;
+  background-color: #cccccc;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.95rem;
 }

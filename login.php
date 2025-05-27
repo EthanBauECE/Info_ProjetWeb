@@ -38,10 +38,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $_SESSION["user_prenom"] = $user['Prenom'];
     $_SESSION["nom"] = $user['Nom'];
     $_SESSION["email"] = $user['Email'];
+    $_SESSION["user_type"] = $user['TypeCompte']; // <-- LA LIGNE MANQUANTE EST AJOUTÉE ICI
+
 
     // Pour les champs qui peuvent être vides, on ajoute une vérification
     $_SESSION["adresse"] = isset($user['Adresse']) ? $user['Adresse'] : 'Non renseignée';
     $_SESSION["carte_vitale"] = isset($user['CarteVitale']) ? $user['CarteVitale'] : 'Non renseignée';
+
 
     // Redirection vers la page d'accueil
     header("Location: index.php");

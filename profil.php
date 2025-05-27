@@ -35,7 +35,8 @@ if (!isset($_SESSION["user_id"])) {
             <p><strong>Email :</strong> <?php echo htmlspecialchars($_SESSION["email"]); ?></p>
             <p><strong>Adresse :</strong> <?php echo htmlspecialchars($_SESSION["adresse"]); ?></p>
             <p><strong>Numéro de Carte Vitale :</strong> <?php echo htmlspecialchars($_SESSION["carte_vitale"]); ?></p>
-            
+            <p><strong>Type de compte :</strong> <?php echo htmlspecialchars(ucfirst($_SESSION["user_type"])); ?></p>
+
             <br>
             
             <div style="text-align: center; margin-top: 1.5rem;">

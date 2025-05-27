@@ -31,39 +31,34 @@
       </ul>
     </nav>    
   </header>
+  <main class="rdv-container">
+    <!-- (PHP) Connexion à la base de données -->
+    <?php
+    /*
+    $pdo = new PDO('mysql:host=localhost;dbname=medicare;charset=utf8', 'root', 'root');
+    $stmt = $pdo->query("SELECT * FROM rendezvous WHERE user_id = 1");
 
-  <div class="search-box">
-    <input type="text" placeholder="Recherche..." />
-  </div>
-
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Welcome to Medical Services You Can Trust</h1>
-      <p>Votre santé est notre priorité. Prenez rendez-vous dès maintenant avec l’un de nos spécialistes.</p>
-      <div class="hero-buttons">
-        <a href="#">Prendre RDV</a>
-        <a href="#">Voir Emploi du Temps</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="info-section">
-    <div class="info-card">
-      <h3>Urgence</h3>
-      <p>Appelez-nous immédiatement pour toute urgence médicale 24/7.</p>
-      <p><strong>+33 1 23 45 67 89</strong></p>
-      <a href="#">En savoir plus</a>
-    </div>
-    <div class="info-card">
-      <h3>Emploi du temps</h3>
-      <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p>
-      <a href="#">Voir les horaires</a>
-    </div>
-    <div class="info-card">
-      <h3>Horaires d'ouverture</h3>
-      <p>Lundi - Vendredi : 8h00 - 17h00<br>Samedi : 09h00 - 14h00<br>Dimanche : 08h00 - 12h00<br>Fermé les jours fériés</p>
-    </div>
-  </section>
+    while ($row = $stmt->fetch()) {
+        echo '<div class="rdv-box">';
+        echo   '<div class="rdv-photo">';
+        echo     '<img src="' . $row['photo_medecin'] . '" alt="photo médecin" />';
+        echo     '<p>photo<br>médecin<br>demandé</p>'; // à remplacer ou supprimer selon le contenu de l'image
+        echo   '</div>';
+        echo   '<div class="rdv-details">';
+        echo     '<h2>Détails rendez-vous</h2>';
+        echo     '<p><strong>Médecin :</strong> ' . $row['nom_medecin'] . '</p>';
+        echo     '<p><strong>Date :</strong> ' . $row['date'] . '</p>';
+        echo     '<p><strong>Heure :</strong> ' . $row['heure'] . '</p>';
+        echo     '<form method="POST" action="annuler_rdv.php">';
+        echo       '<input type="hidden" name="id_rdv" value="' . $row['id'] . '">';
+        echo       '<button type="submit" class="btn-annuler">Annuler le rdv</button>';
+        echo     '</form>';
+        echo   '</div>';
+        echo '</div>';
+    }
+    */
+    ?>
+  </main>
 
   <footer>
     <p>Contactez-nous : contact@medicare.omnes</p>
@@ -72,7 +67,5 @@
       Adresse : 10 rue des Médecins, Paris
     </div>
   </footer>
-
 </body>
-
 </html>

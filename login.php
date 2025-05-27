@@ -24,7 +24,7 @@
             </form>
             <div class="login-footer">
                 <a href="#">Mot de passe oublié ?</a>
-                <p>Pas de compte ? <a href="#">Inscrivez-vous</a></p>
+                <p>Pas de compte ? <a href="register.php">Inscrivez-vous</a></p>
             </div>
         </div>
     </main>

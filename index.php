@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html lang="fr">
 
 <!-- Importation du head -->
 <?php require 'includes/head.php'; ?>
@@ -13,8 +14,8 @@
             <h1>Welcome to Medical Services You Can Trust</h1>
             <p>Votre santé est notre priorité. Prenez rendez-vous dès maintenant avec l’un de nos spécialistes.</p>
             <div class="hero-buttons">
-                <a href="#">Prendre RDV</a>
-                <a href="#">Voir Emploi du Temps</a>
+                <a href="register.php">Prendre RDV</a>
+                <a href="planning.php">Voir Emploi du Temps</a>
             </div>
         </div>
     </section>
@@ -24,17 +25,16 @@
             <h3>Urgence</h3>
             <p>Appelez-nous immédiatement pour toute urgence médicale 24/7.</p>
             <p><strong>+33 1 23 45 67 89</strong></p>
-            <a href="#">En savoir plus</a>
+            <a href="urgence.php">En savoir plus</a>
         </div>
         <div class="info-card">
             <h3>Emploi du temps</h3>
             <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p>
-            <a href="#">Voir les horaires</a>
+            <a href="planning.php">Voir les horaires</a>
         </div>
         <div class="info-card">
             <h3>Horaires d'ouverture</h3>
-            <p>Lundi - Vendredi : 8h00 - 17h00<br>Samedi : 09h00 - 14h00<br>Dimanche : 08h00 - 12h00<br>Fermé les jours
-                fériés</p>
+            <p>Lundi - Vendredi : 8h00 - 17h00<br>Samedi : 09h00 - 14h00<br>Dimanche : 08h00 - 12h00<br>Fermé les jours fériés</p>
         </div>
     </section>
 

@@ -1,8 +1,17 @@
+<?php 
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+?>
+
 <header>
     <div class="header-container">
         <img src="./images/medicare_logo.png" alt="Logo Medicare" class="logo">
         <h1>Medicare : Services Médicaux</h1>
     </div>
+
     <nav>
         <div class="nav-left">
             <ul>
@@ -27,9 +36,18 @@
         </div>
 
         <div class="nav-right">
-            <a href="login.php" class="account-icon">
-                <img src="./images/monCompte.png" alt="Mon Compte">
-            </a>
+            <?php if (isset($_SESSION["user_id"])) : ?>                   
+            <a href="profil.php" class="account-text"> 
+                <div class="account-icon">
+                    <img src="./images/monCompte.png" alt="Mon Compte">
+                    <span class="account-text"><?php echo htmlspecialchars($_SESSION['user_prenom']); ?></span>
+                </div></a>
+            <?php else : ?>
+                <a href="login.php" class="account-icon">
+                    <img src="./images/monCompte.png" alt="Mon Compte">
+                    <span class="account-text">Connexion</span>
+                </a>
+            <?php endif; ?>
         </div>
     </nav>
 </header>

@@ -11,13 +11,26 @@
 
     <div class="rdv-container">
         <?php
-    // (Connexion à la base de données)
-    $pdo = new PDO('mysql:host=localhost;dbname=medicare;charset=utf8', 'root', 'root');
-    date_default_timezone_set('Europe/Paris');
-    
-    // (Supposons que l'utilisateur est connecté avec user_id = 5)
-    $stmt = $pdo->prepare("SELECT * FROM rendezvous WHERE user_id = ? ORDER BY date ASC, heure ASC");
-    $stmt->execute([5]);
+    // Dans votre fichier rdv.php
+
+// (Connexion à la base de données)
+$pdo = new PDO('mysql:host=localhost;dbname=medicare;charset=utf8', 'root', 'root');
+date_default_timezone_set('Europe/Paris');
+
+// S'assurer que l'utilisateur est connecté avant d'afficher la page
+if (!isset($_SESSION["user_id"])) {
+    header("Location: login.php"); // Redirige vers la page de connexion
+    exit();
+}
+
+// Récupérer l'ID de l'utilisateur depuis la session
+$user_id = $_SESSION["user_id"];
+
+// Utiliser l'ID de l'utilisateur connecté dans la requête
+$stmt = $pdo->prepare("SELECT * FROM rendezvous WHERE user_id = ? ORDER BY date ASC, heure ASC");
+$stmt->execute([$user_id]); // On utilise la variable $user_id
+
+// ... Le reste de votre code pour afficher les rendez-vous ...
     
     while ($rdv = $stmt->fetch()) {
         // Fusionne date et heure pour comparer à maintenant

@@ -1,36 +1,12 @@
 <!DOCTYPE html>
 
-<head>
-  <meta charset="UTF-8" />
-  <title>Médecine Générale</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/png" href="medicare_logo.png" />
-</head>
+<!-- Importation du head -->
+<?php require 'includes/head.php'; ?>
 
 <body>
 
-    <header>
-        <div class="header-container">
-          <img src="medicare_logo.png" alt="Logo Medicare" class="logo">
-          <h1>Medicare : Médecins spécialisés</h1>
-        </div>
-        <nav>
-          <ul>
-            <li><a href="index.html">Accueil</a></li>
-            <li class="dropdown">
-              <a href="parcourir.html">Tout Parcourir</a>
-              <ul class="dropdown-menu">
-                <li><a href="medecine_general.html">Médecine générale</a></li>
-                <li><a href="medecins_special.html">Médecins spécialisés</a></li>
-                <li><a href="labo.php">Laboratoire de biologie médicale</a></li>
-              </ul>
-            </li>
-            <li><a href="recherche.html">Recherche</a></li>
-            <li><a href="rdv.html">Rendez-vous</a></li>
-            <li><a href="compte.html">Votre Compte</a></li>
-          </ul>
-        </nav>    
-      </header>
+  <!-- Importation du header -->
+  <?php require 'includes/header.php'; ?>
 
   <main style="padding: 2rem; background-color: #f9f9f9;">
     
@@ -73,13 +49,8 @@
 
   </main>
 
-  <footer>
-    <p>Contactez-nous : contact@medicare.omnes</p>
-    <p>Téléphone : 01 23 45 67 89</p>
-    <div id="map">
-      Adresse : 10 rue des Médecins, Paris
-    </div>
-  </footer>
+  <!-- Importation du footer -->
+  <?php require 'includes/footer.php'; ?>
 
 </body>
 </html>

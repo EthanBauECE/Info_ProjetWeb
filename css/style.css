@@ -21,50 +21,126 @@ header {
 .header-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
+  text-align: center;
 }
 
 .header-container h1 {
   flex: 1;
-  text-align: center;
   font-size: 2.2rem;
   color: #f7f9fa;
+  margin: 0 1rem;
 }
 
 .header-container img.logo {
-  height: 150px;
+  height: 120px;
   width: auto;
 }
 
-nav ul {
+/* NAVIGATION (Mise en page finale) */
+header nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  gap: 2rem; /* Espace entre les blocs de navigation */
+  flex-wrap: wrap;
+}
+
+/* On crée une disposition symétrique pour centrer parfaitement le bloc du milieu */
+.nav-left, .nav-right {
+  flex: 1;
+}
+
+.nav-center {
+  flex: 2; /* Le centre peut prendre plus de place, mais restera aligné au milieu */
   display: flex;
   justify-content: center;
+}
+
+.nav-right {
+    display: flex;
+    justify-content: flex-end; /* Aligne l'icône complètement à droite */
+}
+
+.nav-left ul {
+  display: flex;
   list-style: none;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-  position: relative;
+  gap: 1rem;
+  padding: 0;
+  align-items: center;
 }
 
-nav ul li {
-  position: relative;
-}
-
-nav a {
+.nav-left a {
+  padding: 12px 22px;
+  border-radius: 25px;
+  transition: background-color 0.3s ease, color 0.3s ease;
   text-decoration: none;
   color: #ffffff;
   font-weight: 500;
-  padding: 8px 12px;
+  display: block;
+  white-space: nowrap;
+}
+
+.nav-left a:hover,
+nav .dropdown:hover > a {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #0a7abf;
+}
+
+/* Barre de recherche centrale */
+.search-form {
+  display: flex;
+  width: 100%;
+  max-width: 450px; /* Correction: Réduction de la largeur de la barre de recherche */
+}
+
+.search-form input[type="text"] {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 25px 0 0 25px;
+  outline: none;
+  font-size: 1rem;
+  min-width: 150px;
+}
+
+.search-form button {
+  padding: 12px 22px;
+  border: none;
+  background-color: #33aaff;
+  color: white;
+  border-radius: 0 25px 25px 0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+.search-form button:hover {
+  background-color: #2288dd;
+}
+
+/* Icône du compte */
+.account-icon img {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.account-icon img:hover {
+  transform: scale(1.1);
 }
 
 /* DROPDOWN MENU */
-/* Ensure dropdown parent has proper positioning */
-nav ul li.dropdown {
+nav li.dropdown {
   position: relative;
 }
 
-/* Basic hidden state */
-.dropdown-menu {
+/* Correction: Assure que le menu est bien caché par défaut */
+.nav-left ul .dropdown-menu {
   display: none;
   position: absolute;
   top: 100%;
@@ -73,24 +149,25 @@ nav ul li.dropdown {
   background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
+  /* Un petit espace pour éviter que la souris ne quitte le menu par accident */
+  margin-top: 8px; 
   padding: 0;
-  margin: 0;
   list-style: none;
+  border-radius: 8px;
 }
 
-/* Show dropdown when hovering on li (including its submenu) */
-nav ul li.dropdown:hover > .dropdown-menu {
+/* On affiche le menu uniquement lorsque la souris est sur l'élément li.dropdown */
+.nav-left ul li.dropdown:hover > .dropdown-menu {
   display: block;
 }
 
-/* Prevent closing too fast by ensuring vertical stacking */
 .dropdown-menu li {
   width: 100%;
 }
 
 .dropdown-menu li a {
   display: block;
-  padding: 10px 20px;
+  padding: 12px 22px;
   color: #0a7abf;
   text-decoration: none;
   white-space: nowrap;
@@ -100,69 +177,10 @@ nav ul li.dropdown:hover > .dropdown-menu {
   background-color: #f2f2f2;
 }
 
-/* Avoid accidental close when hovering between items */
-nav ul li.dropdown {
-  padding-bottom: 0.5rem;
-}
-
-/* SEARCH BOX */
-.search-box {
-  background: rgba(255, 255, 255, 0.9);
-  margin: 1rem auto;
-  max-width: 400px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-}
-
-.search-box input {
-  background: transparent;
-  border: none;
-  width: 100%;
-  padding: 6px;
-  font-size: 1rem;
-  outline: none;
-  color: #333;
-}
-
-.search-box {
-  margin: 40px auto;
-  max-width: 300px;
-}
-
-.search-box input[type="text"] {
-  width: 70%;
-  padding: 8px;
-  border: 2px solid #aaa;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.search-icon {
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 8px;
-  font-size: 1.4rem;
-}
-
-.search-box button {
-  margin-top: 20px;
-  padding: 10px 24px;
-  background-color: #33aaff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.search-box button:hover {
-  background-color: #2288dd;
-}
 
 /* HERO SECTION */
 .hero {
-  background: url('fond.png') center/cover no-repeat;
+  background: url('../images/fond.png') center/cover no-repeat;
   height: 90vh;
   display: flex;
   flex-direction: column;
@@ -265,12 +283,14 @@ footer p {
   font-size: 0.95rem;
 }
 
+
+/* PAGE LOGIN */
 .login-main {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 4rem 2rem;
-  background-color: #f2f2f2; /* Fond gris clair pour contraster */
+  background-color: #f2f2f2;
   min-height: 70vh; 
 }
 
@@ -285,7 +305,7 @@ footer p {
 }
 
 .login-container h2 {
-  color: #0a7abf; /* Couleur principale du site */
+  color: #0a7abf;
   margin-bottom: 2rem;
   font-size: 1.8rem;
 }
@@ -308,7 +328,6 @@ footer p {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 1rem;
-  box-sizing: border-box; /* S'assure que le padding n'augmente pas la largeur */
   transition: border-color 0.3s;
 }
 
@@ -352,45 +371,8 @@ footer p {
   color: #777;
 }
 
-/* RESPONSIVE DESIGN */
-@media screen and (max-width: 768px) {
-  .hero h1 {
-    font-size: 2.2rem;
-  }
 
-  .hero p {
-    font-size: 1rem;
-  }
-
-  .info-section {
-    flex-direction: column;
-    padding: 2rem 1rem;
-  }
-
-  .header-container {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .header-container h1 {
-    order: 2;
-    text-align: center;
-  }
-
-  .header-container img.logo {
-    order: 1;
-    height: 80px;
-  }
-
-  /* =================================== */
-/* STYLES POUR LA PAGE DE CONNEXION    */
-/* AJOUTEZ CE BLOC À VOTRE FICHIER CSS */
-/* =================================== */
-
-
-}
-
-/* RENDEZ-VOUS */
+/* PAGE RENDEZ-VOUS */
 .rdv-container {
   padding: 30px;
   display: flex;
@@ -470,4 +452,44 @@ footer p {
   border-radius: 8px;
   font-weight: bold;
   font-size: 0.95rem;
+}
+
+
+/* RESPONSIVE DESIGN */
+@media screen and (max-width: 1200px) {
+    header nav {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}
+
+
+@media screen and (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .info-section {
+    flex-direction: column;
+    padding: 2rem 1rem;
+  }
+
+  .header-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-container h1 {
+    order: 2;
+    text-align: center;
+  }
+
+  .header-container img.logo {
+    order: 1;
+    height: 80px;
+  }
 }

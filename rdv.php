@@ -1,38 +1,16 @@
 <!DOCTYPE html>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Medicare</title>
-  <link rel="icon" type="image/png" href="medicare_logo.png" />
-  <link rel="stylesheet" href="style.css" />
-</head>
 
- <body>
+<!-- Importation du head -->
+<?php require 'includes/head.php'; ?>
 
-  <header>
-    <div class="header-container">
-      <img src="medicare_logo.png" alt="Logo Medicare" class="logo">
-      <h1>Medicare : Services Médicaux</h1>
-    </div>
-    <nav>
-      <ul>
-        <li><a href="index.html">Accueil</a></li>
-        <li class="dropdown">
-          <a href="parcourir.html">Tout Parcourir</a>
-          <ul class="dropdown-menu">
-            <li><a href="medecine_general.html">Médecine générale</a></li>
-            <li><a href="medecins_special.html">Médecins spécialisés</a></li>
-            <li><a href="laboratoire.html">Laboratoire de biologie médicale</a></li>
-          </ul>
-        </li>
-        <li><a href="recherche.html">Recherche</a></li>
-        <li><a href="rdv.html">Rendez-vous</a></li>
-        <li><a href="compte.html">Votre Compte</a></li>
-      </ul>
-    </nav>    
-  </header>
-  <div class="rdv-container">
-    <?php
+<body>
+
+    <!-- Importation du header -->
+    <?php require 'includes/header.php'; ?>
+
+
+    <div class="rdv-container">
+        <?php
     // (Connexion à la base de données)
     $pdo = new PDO('mysql:host=localhost;dbname=medicare;charset=utf8', 'root', 'root');
     date_default_timezone_set('Europe/Paris');
@@ -72,15 +50,12 @@
     }
     ?>
     </div>
-    
-  </main>
 
-  <footer>
-    <p>Contactez-nous : contact@medicare.omnes</p>
-    <p>Téléphone : 01 23 45 67 89</p>
-    <div id="map">
-      Adresse : 10 rue des Médecins, Paris
-    </div>
-  </footer>
+    </main>
+
+    <!-- Importation du footer -->
+    <?php require 'includes/footer.php'; ?>
+
 </body>
+
 </html>

@@ -513,6 +513,26 @@ footer p {
   }
 }
 
+.form-group input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1.5px solid #ccc;
+  font-size: 1.05rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  background-color: white;
+}
+
+.form-group input::placeholder {
+  color: #888;
+  font-size: 1rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #0a7abf;
+  box-shadow: 0 0 0 3px rgba(10, 122, 191, 0.2);
+}
 
 
 

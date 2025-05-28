@@ -5,9 +5,14 @@
 <?php require 'includes/header.php'; ?>
 
 <main style="padding: 2rem; background-color: #f9f9f9;">
-    <h1 style="margin-bottom: 2rem;">Médecins Généralistes</h1>
+    <h1 style="margin-bottom: 2rem;">Médecins spécialisés</h1>
 
     <?php
+    // Fonction helper pour gérer les valeurs nulles
+    function safe_html($value) {
+        return $value !== null ? htmlspecialchars($value) : '';
+    }
+
     // Connexion MySQLi
     $conn = new mysqli("localhost", "root", "", "base_donne_web");
 
@@ -15,7 +20,7 @@
         die("Erreur de connexion: " . $conn->connect_error);
     }
 
-    // Requête SQL insensible à la casse avec LEFT JOIN
+    // Requête SQL pour tous les types SAUF généraliste
     $sql = "SELECT u.Nom, u.Prenom, u.Email,
                    p.Photo, p.Video, p.Telephone, p.Description, p.Type,
                    a.Adresse, a.Ville, a.CodePostal, a.InfosComplementaires
@@ -27,15 +32,10 @@
     $result = $conn->query($sql);
 
     if ($result === false) {
-        echo "<p style='color: red;'>Erreur SQL : " . htmlspecialchars($conn->error) . "</p>";
+        echo "<p style='color: red;'>Erreur SQL : " . safe_html($conn->error) . "</p>";
     } elseif ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             echo '<section class="info-card" style="background: #fff; padding: 1.5rem; margin-bottom: 2rem; border-radius: 10px;">';
-
-            // Fonction helper pour gérer les valeurs nulles
-            function safe_html($value) {
-                return $value !== null ? htmlspecialchars($value) : '';
-            }
 
             echo '<h2>Dr. ' . safe_html($row['Prenom']) . ' ' . safe_html($row['Nom']) . '</h2>';
 
@@ -63,7 +63,7 @@
             echo '</section>';
         }
     } else {
-        echo "<p style='color: red;'>Aucun médecin généraliste trouvé.</p>";
+        echo "<p style='color: red;'>Aucun spécialiste trouvé.</p>";
     }
 
     $conn->close();

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -42,5 +41,4 @@
     <?php require 'includes/footer.php'; ?>
 
 </body>
-
 </html>

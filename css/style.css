@@ -597,6 +597,89 @@ footer p {
   }
 }
 
+/* PAGE REGISTER */
+.register-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  background-color: #f2f2f2;
+  min-height: 80vh;
+}
+
+.register-container {
+  background-color: #ffffff;
+  padding: 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.register-container h2 {
+  color: #0a7abf;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+}
+
+.register-container .form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.register-container .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.register-container .form-group input {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 6px; 
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.register-container .form-group input:focus {
+  outline: none;
+  border-color: #0a7abf;
+}
+
+.register-container button[type="submit"] {
+  width: 100%;
+  padding: 15px;
+  background-color: #0a7abf;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.register-container button[type="submit"]:hover {
+  background-color: #075c92;
+}
+
+.register-container p {
+  margin-top: 1.5rem;
+  color: #777;
+}
+
+.register-container a {
+  color: #0a7abf;
+  text-decoration: none;
+}
+
+.register-container a:hover {
+  text-decoration: underline;
+}
+
 
 
 

@@ -1,169 +1,234 @@
 <?php
-require 'includes/head.php';
-require 'includes/header.php';
+// On s'assure que la session est bien démarrée avant tout.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// --- Connexion à la base de données ---
+try {
+    $pdo = new PDO('mysql:host=localhost;dbname=base_donne_web;charset=utf8', 'root', '');
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("ERREUR : Impossible de se connecter à la base de données. " . $e->getMessage());
+}
+
+// --- Récupérer la liste des laboratoires AVEC LEURS ADRESSES ---
+try {
+    // Modification de la requête pour inclure les informations de la table 'adresse'
+    $stmtLabos = $pdo->query("
+        SELECT 
+            l.ID, l.Nom, l.Photos, l.Email, l.Telephone, l.Description,
+            ad.Adresse AS adresse_ligne, ad.Ville AS adresse_ville, ad.CodePostal AS adresse_code_postal, ad.InfosComplementaires AS adresse_infos_comp
+        FROM 
+            laboratoire l
+        LEFT JOIN 
+            adresse ad ON l.ID_Adresse = ad.ID
+        ORDER BY 
+            l.Nom ASC
+    ");
+    $laboratoires = $stmtLabos->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("ERREUR : Impossible de récupérer la liste des laboratoires. " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nos Laboratoires - Medicare</title>
+    <link rel="icon" type="image/png" href="./images/medicare_logo.png" />
+    <link rel="stylesheet" href="./css/style.css" />
+
     <style>
-        .main-container {
-            padding: 2rem;
-            background-color: #f2f2f2;
+        .main-labo-content {
+            background-color: #f4f7f6;
+            padding: 2rem 1rem;
+        }
+        .labo-container {
+            max-width: 900px;
+            margin: auto;
+        }
+        .page-labo-title {
+            text-align: center;
+            color: #0a7abf;
+            margin-bottom: 2.5rem;
+            font-size: 2.2rem;
+        }
+        .labo-bricks-list {
             display: flex;
             flex-direction: column;
-            align-items: center;
             gap: 2rem;
         }
-        .main-container h1 {
-            color: #333;
-            margin-bottom: 1rem;
-        }
-        .lab-card {
+        .labo-brick {
             background-color: #ffffff;
-            border: 1px solid #e0e0e0;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 900px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
         }
-        .lab-header {
+        .labo-header {
             display: flex;
-            gap: 2rem;
-            align-items: center;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
-        .lab-photo {
-            width: 170px;
-            height: 170px;
-            border: 1px solid #e0e0e0;
-            background-color: #f8f8f8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #aaa;
-            border-radius: 4px;
-            flex-shrink: 0;
-            font-size: 1.2rem;
-        }
-        .lab-photo img {
-            width: 100%;
-            height: 100%;
+        .labo-photo {
+            width: 100px;
+            height: 100px;
             object-fit: cover;
-            border-radius: 4px;
-        }
-        .lab-details {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .lab-details .lab-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-            background-color: #eaf5ff;
-            padding: 12px;
             border-radius: 6px;
-            margin: 0;
+            flex-shrink: 0;
         }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            padding-top: 1.0rem;
+        .labo-title-section h3 {
+            margin: 0 0 0.5rem 0;
+            color: #0a7abf;
+            font-size: 1.4rem;
         }
-        .info-cell {
-            font-size: 1.1rem;
+        .labo-info {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 1rem;
         }
-        .full-width {
-            grid-column: 1 / -1;
+        .labo-info p {
+            margin: 0.3rem 0;
         }
-        .info-cell strong {
-            font-weight: 500;
+        .labo-info strong {
             color: #333;
         }
-        .actions-container {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
+        .labo-description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            color: #444;
+        }
+        /* Style pour le nouveau bouton "Communiquer" */
+        .btn-communiquer {
+            display: inline-block;
+            background-color: #5bc0de; /* Couleur différente pour le distinguer */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            align-self: flex-start; /* Aligne le bouton à gauche */
+            margin-bottom: 1.5rem; /* Espace avant la section des services */
+            transition: background-color 0.3s;
+        }
+        .btn-communiquer:hover {
+            background-color: #31b0d5;
+        }
+
+        .labo-services-title {
+            font-size: 1.25rem; /* Un peu plus gros */
+            color: #0a7abf;   /* En bleu */
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+            border-top: 1px solid #eee;
             padding-top: 1rem;
         }
-        .btn-action {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            transition: opacity 0.3s ease;
+        .labo-services-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        .btn-action:hover { opacity: 0.85; }
-        .btn-rdv { background-color: #6c757d; }
-        .btn-communiquer { background-color: #5dade2; }
+        .service-button {
+            display: block;
+            width: 100%;
+            background-color: #e8f4fd;
+            color: #0a7abf;
+            border: 1px solid #bde0fe;
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .service-button:hover {
+            background-color: #0a7abf;
+            color: white;
+        }
+        .service-price {
+            font-size: 0.85rem;
+            color: #777;
+        }
     </style>
 </head>
 <body>
-<main class="main-container">
-    <h1>Laboratoires</h1>
-    <?php
-    function safe_html($value) {
-        return $value !== null ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
-    }
+    <?php require 'includes/header.php'; ?>
 
-    $conn = new mysqli("localhost", "root", "", "base_donne_web");
-    if ($conn->connect_error) {
-        die("Erreur de connexion: " . $conn->connect_error);
-    }
-    $conn->set_charset("utf8");
+    <main class="main-labo-content">
+        <div class="labo-container">
+            <h1 class="page-labo-title">Nos Laboratoires Partenaires</h1>
 
-    // Adapte la requête selon ta structure de base de données
-    $sql = "SELECT l.ID, l.Nom, l.Description, l.Telephone, l.Email, l.Photo, a.Adresse, a.Ville, a.CodePostal
-            FROM laboratoire l
-            LEFT JOIN adresse a ON l.ID_Adresse = a.ID";
+            <div class="labo-bricks-list">
+                <?php if (empty($laboratoires)): ?>
+                    <p style="text-align: center;">Aucun laboratoire disponible pour le moment.</p>
+                <?php else: ?>
+                    <?php foreach ($laboratoires as $labo): ?>
+                        <div class="labo-brick">
+                            <div class="labo-header">
+                                <img src="<?php echo htmlspecialchars($labo['Photos'] ?: './images/default_labo.jpg'); ?>" alt="Photo de <?php echo htmlspecialchars($labo['Nom']); ?>" class="labo-photo">
+                                <div class="labo-title-section">
+                                    <h3><?php echo htmlspecialchars($labo['Nom']); ?></h3>
+                                    <div class="labo-info">
+                                        <?php if (!empty($labo['adresse_ligne'])): ?>
+                                            <p><strong>Adresse :</strong> 
+                                                <?php echo htmlspecialchars($labo['adresse_ligne']); ?>
+                                                <?php if (!empty($labo['adresse_code_postal']) && !empty($labo['adresse_ville'])): ?>
+                                                    , <?php echo htmlspecialchars($labo['adresse_code_postal']) . ' ' . htmlspecialchars($labo['adresse_ville']); ?>
+                                                <?php endif; ?>
+                                            </p>
+                                            <?php if (!empty($labo['adresse_infos_comp'])): ?>
+                                                <p style="font-size:0.85em; color: #666;"><em><?php echo htmlspecialchars($labo['adresse_infos_comp']); ?></em></p>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        
+                                        <p><strong>Email :</strong> <?php echo htmlspecialchars($labo['Email']); ?></p>
+                                        <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($labo['Telephone']); ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p class="labo-description"><?php echo nl2br(htmlspecialchars($labo['Description'])); ?></p>
 
-    $result = $conn->query($sql);
+                            <a href="mailto:<?php echo htmlspecialchars($labo['Email']); ?>" class="btn-communiquer">Communiquer avec ce laboratoire</a>
+                            
+                            <h4 class="labo-services-title">Prendre un rendez-vous pour :</h4>
+                            <div class="labo-services-list">
+                                <?php
+                                try {
+                                    $stmtServices = $pdo->prepare("SELECT NomService, Prix FROM service_labo WHERE ID_Laboratoire = ? ORDER BY NomService ASC");
+                                    $stmtServices->execute([$labo['ID']]);
+                                    $services = $stmtServices->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $id = safe_html($row['ID']);
-            $adresse_complete = safe_html($row['Adresse']) . ', ' . safe_html($row['CodePostal']) . ' ' . safe_html($row['Ville']);
-            ?>
-            <div class="lab-card">
-                <div class="lab-header">
-                    <div class="lab-photo">
-                        <?php if (!empty($row['Photo'])): ?>
-                            <img src="<?= safe_html($row['Photo']) ?>" alt="Photo du laboratoire">
-                        <?php else: ?>
-                            <span>Photo</span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="lab-details">
-                        <h3 class="lab-title"><?= safe_html($row['Nom']) ?></h3>
-                        <div class="info-grid">
-                            <div class="info-cell full-width"><strong>Adresse :</strong> <?= $adresse_complete ?></div>
-                            <div class="info-cell full-width"><strong>Description :</strong> <?= safe_html($row['Description']) ?></div>
-                            <div class="info-cell"><strong>Téléphone :</strong> <?= safe_html($row['Telephone']) ?></div>
-                            <div class="info-cell"><strong>Email :</strong> <?= safe_html($row['Email']) ?></div>
+                                    if (empty($services)) {
+                                        echo "<p style='font-size:0.9em; color:#777;'>Aucun service spécifique listé pour ce laboratoire.</p>";
+                                    } else {
+                                        foreach ($services as $service) {
+                                            echo '<a href="prendre_rdv_labo.php?labo_id=' . $labo['ID'] . '&service=' . urlencode($service['NomService']) . '" class="service-button">';
+                                            echo htmlspecialchars($service['NomService']);
+                                            if (isset($service['Prix'])) {
+                                                echo ' <span class="service-price">(' . htmlspecialchars($service['Prix']) . ' €)</span>';
+                                            }
+                                            echo '</a>';
+                                        }
+                                    }
+                                } catch (PDOException $e) {
+                                    echo "<p style='color:red;'>Erreur de chargement des services : " . $e->getMessage() . "</p>";
+                                }
+                                ?>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="actions-container">
-                    <a href="communiquer.php?lab_id=<?= $id ?>" class="btn-action btn-communiquer">Communiquer</a>
-                    <a href="prendre_rdv_lab.php?lab_id=<?= $id ?>" class="btn-action btn-rdv">Prendre le RDV</a>
-                </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
-            <?php
-        }
-    } else {
-        echo "<p>Aucun laboratoire trouvé.</p>";
-    }
-    $conn->close();
-    ?>
-</main>
-<?php require 'includes/footer.php'; ?>
+        </div>
+    </main>
+
+    <?php require 'includes/footer.php'; ?>
 </body>
 </html>

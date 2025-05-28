@@ -1,11 +1,11 @@
-/* RESET */
+/* __________________________________/ RESET \__________________________________*/
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-
+/* __________________________________/ INDEX \__________________________________*/
 
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -13,37 +13,35 @@ body {
   color: #333;
 }
 
-/* HEADER */
-/* HEADER */
+/* __________________________________/ HEADER \__________________________________*/
+
 header {
   background-color: #0a7abf;
   padding: 1rem 2rem;
   border-bottom: 2px solid #e0e0e0;
 }
 
-/* Correction pour un centrage parfait du titre */
 .header-container {
-  position: relative; /* Contexte pour le positionnement absolu du logo */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 120px; /* Hauteur minimale pour contenir le logo */
+  min-height: 120px;
 }
 
 .header-container h1 {
-  /* Le titre n'est plus un élément flex, il prend toute la largeur */
   width: 100%;
-  text-align: center; /* Centrage parfait du texte */
+  text-align: center;
   font-size: 2.2rem;
   color: #f7f9fa;
   margin: 0;
-  padding: 0 1rem; /* Empêche le texte de toucher les bords sur petit écran */
+  padding: 0 1rem;
 }
 
 .header-container img.logo {
-  position: absolute; /* Le logo sort du flux et ne décale plus le titre */
-  left: 0; /* Aligné à gauche dans le conteneur du header */
+  position: absolute;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   height: 120px;
@@ -282,53 +280,33 @@ nav li.dropdown {
 
 
 /* HERO SECTION */
-
-/* === HERO avec fond défilant === */
 .hero {
-  position: relative;
+  background: url('../images/fond.png') center/cover no-repeat;
   height: 90vh;
-  overflow: hidden;
-}
-
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: 0;
-  animation: backgroundFade 16s infinite;
-}
-
-@keyframes backgroundFade {
-  0%    { background-image: url('../images/fond.png'); }
-  25%   { background-image: url('../images/fond9.jpeg'); }
-  50%   { background-image: url('../images/fond6.avif'); }
-  75%   { background-image: url('../images/fond7.jpeg'); }
-  100%  { background-image: url('../images/fond8.webp'); }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 5%;
+  color: white;
+  position: relative;
 }
 
 .hero::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4); /* assombrit légèrement le fond */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
   z-index: 1;
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
-  color: white;
-  padding: 0 5%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* centrer verticalement */
-  align-items: flex-start; /* ou center si tu veux aussi centré horizontalement */
 }
-
 
 .hero h1 {
   font-size: 3rem;
@@ -351,13 +329,9 @@ nav li.dropdown {
   transition: 0.3s;
 }
 
-
 .hero-buttons a:hover {
   background-color: #075c92;
 }
-
-
-
 
 /* INFO SECTION */
 .info-section {

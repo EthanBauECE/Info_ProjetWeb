@@ -60,12 +60,13 @@ if ($type === "client") {
         <?php if ($type === "client") : ?>
             <p><strong>Téléphone :</strong> <?= htmlspecialchars($infos_supp["Telephone"] ?? "Non renseigné") ?></p>
             <p><strong>Carte Vitale :</strong> <?= htmlspecialchars($infos_supp["CarteVitale"] ?? "Non renseignée") ?></p>
-
+            <p><strong>ID Adresse :</strong> <?= htmlspecialchars($infos_supp["ID_Adresse"] ?? "Non renseignée") ?></p>
 
         <?php elseif ($type === "personnel") : ?>
             <p><strong>Téléphone :</strong> <?= htmlspecialchars($infos_supp["Telephone"] ?? "Non renseigné") ?></p>
             <p><strong>Description :</strong> <?= htmlspecialchars($infos_supp["Description"] ?? "") ?></p>
             <p><strong>Spécialité :</strong> <?= htmlspecialchars($infos_supp["Type"] ?? "") ?></p>
+            <p><strong>ID Adresse :</strong> <?= htmlspecialchars($infos_supp["ID_Adresse"] ?? "") ?></p>
             <p><strong>Photo :</strong>
                 <?php if (!empty($infos_supp["Photo"])): ?>
                     <img src="uploads/<?= htmlspecialchars($infos_supp["Photo"]) ?>" alt="Photo" height="60">

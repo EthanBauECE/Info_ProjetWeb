@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Si l'utilisateur est déjà connecté, on le redirige vers l'accueil
 if (isset($_SESSION["user_id"])) {
-    header("Location: index.php");
+    
     exit();
 }
 

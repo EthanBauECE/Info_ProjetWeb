@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -10,6 +9,7 @@
     <!-- Importation du header -->
     <?php require 'includes/header.php'; ?>
 
+    <!-- Présentation site -->
     <section class="hero">
         <div class="hero-content">
             <h1>Welcome to Medical Services You Can Trust</h1>
@@ -21,6 +21,7 @@
         </div>
     </section>
 
+    <!-- Panneaux d'informations -->
     <section class="info-section">
         <div class="info-card">
             <h3>Urgence</h3>
@@ -32,10 +33,6 @@
             <h3>Emploi du temps</h3>
             <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p>
             <a href="planning.php">Voir les horaires</a>
-        </div>
-        <div class="info-card">
-            <h3>Horaires d'ouverture</h3>
-            <p>Lundi - Vendredi : 8h00 - 17h00<br>Samedi : 09h00 - 14h00<br>Dimanche : 08h00 - 12h00<br>Fermé les jours fériés</p>
         </div>
     </section>
 

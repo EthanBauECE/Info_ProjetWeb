@@ -8,6 +8,7 @@
     <!-- Importation du header -->
     <?php require 'includes/header.php'; ?>
 
+    <!-- Panneaux d'informations -->
     <main style="padding: 2rem; background-color: #f9f9f9;">
         <section class="info-section">
             <div class="info-card">

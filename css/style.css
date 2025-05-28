@@ -1,11 +1,11 @@
-/* RESET */
+/* __________________________________/ RESET \__________________________________*/
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-
+/* __________________________________/ INDEX \__________________________________*/
 
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -13,37 +13,35 @@ body {
   color: #333;
 }
 
-/* HEADER */
-/* HEADER */
+/* __________________________________/ HEADER \__________________________________*/
+
 header {
   background-color: #0a7abf;
   padding: 1rem 2rem;
   border-bottom: 2px solid #e0e0e0;
 }
 
-/* Correction pour un centrage parfait du titre */
 .header-container {
-  position: relative; /* Contexte pour le positionnement absolu du logo */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 120px; /* Hauteur minimale pour contenir le logo */
+  min-height: 120px;
 }
 
 .header-container h1 {
-  /* Le titre n'est plus un élément flex, il prend toute la largeur */
   width: 100%;
-  text-align: center; /* Centrage parfait du texte */
+  text-align: center;
   font-size: 2.2rem;
   color: #f7f9fa;
   margin: 0;
-  padding: 0 1rem; /* Empêche le texte de toucher les bords sur petit écran */
+  padding: 0 1rem;
 }
 
 .header-container img.logo {
-  position: absolute; /* Le logo sort du flux et ne décale plus le titre */
-  left: 0; /* Aligné à gauche dans le conteneur du header */
+  position: absolute;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   height: 120px;

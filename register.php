@@ -31,6 +31,10 @@
                     <input type="text" id="carte_vitale" name="carte_vitale" placeholder="Ex : 123456789012345" required>
                 </div>
                 <div class="form-group">
+                     <label for="telephone">Téléphone</label>
+                     <input type="tel" id="telephone" name="telephone" placeholder="Ex : 0601020304" required>
+                </div>
+                <div class="form-group">
                     <label for="password">Mot de passe</label>
                     <input type="password" id="password" name="password" placeholder="Créez un mot de passe sécurisé" required>
                 </div>

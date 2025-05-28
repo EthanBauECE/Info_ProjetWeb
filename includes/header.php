@@ -21,7 +21,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     <ul class="dropdown-menu">
                         <li><a href="medecine_general.php">Médecine générale</a></li>
                         <li><a href="medecins_special.php">Médecins spécialisés</a></li>
-                        <li><a href="laboratoire.php">Laboratoire de biologie médicale</a></li>
+                        <li><a href="labo.php">Laboratoire de biologie médicale</a></li>
                     </ul>
                 </li>
                 <li><a href="rdv.php">Rendez-vous</a></li>

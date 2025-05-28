@@ -1,59 +1,75 @@
 <!DOCTYPE html>
-
-<!-- Importation du head -->
 <?php require 'includes/head.php'; ?>
 
 <body>
+<?php require 'includes/header.php'; ?>
 
-    <!-- Importation du header -->
-    <?php require 'includes/header.php'; ?>
+<main style="padding: 2rem; background-color: #f9f9f9;">
+    <h1 style="margin-bottom: 2rem;">Médecins Généralistes</h1>
 
-    <main style="padding: 2rem; background-color: #f9f9f9;">
+    <?php
+    // Connexion MySQLi
+    $conn = new mysqli("localhost", "root", "", "base_donne_web");
 
-        <!-- Exemple de fiche médecin -->
-        <section id="alice-dupont" class="info-card" style="background-color: #ffffff;">
-            <h2>Dr. Alice Dupont</h2>
-            <img src="alice_dupont.jpg" alt="Dr. Alice Dupont"
-                style="width: 200px; border-radius: 8px; margin: 1rem 0;" />
-            <p><strong>Bureau :</strong> Bâtiment A, Bureau 203</p>
-            <h3>Disponibilité cette semaine :</h3>
-            <ul>
-                <li>Lundi : 09h00 - 13h00</li>
-                <li>Mardi : 14h00 - 18h00</li>
-                <li>Mercredi : 09h00 - 12h00</li>
-                <li>Jeudi : 14h00 - 17h00</li>
-                <li>Vendredi : 10h00 - 13h00</li>
-            </ul>
+    if ($conn->connect_error) {
+        die("Erreur de connexion: " . $conn->connect_error);
+    }
 
-            <h3>CV :</h3>
-            <p>Diplômée de l’Université de Paris Descartes. 10 ans d'expérience en médecine générale. Spécialisée en
-                suivi de patients chroniques et prévention.</p>
+    // Requête SQL insensible à la casse avec LEFT JOIN
+    $sql = "SELECT u.Nom, u.Prenom, u.Email,
+                   p.Photo, p.Video, p.Telephone, p.Description, p.Type,
+                   a.Adresse, a.Ville, a.CodePostal, a.InfosComplementaires
+            FROM utilisateurs_personnel p
+            LEFT JOIN utilisateurs u ON p.ID = u.ID
+            LEFT JOIN adresse a ON p.ID_Adresse = a.ID
+            WHERE LOWER(p.Type) = 'généraliste'";
 
-            <h3>Contact :</h3>
-            <p>Ce médecin est disponible.</p>
-            <ul>
-                <li><a href="#">Envoyer un message texte</a></li>
-                <li><a href="#">Envoyer un message vocal</a></li>
-                <li><a href="#">Prendre contact sur place</a></li>
-            </ul>
-        </section>
+    $result = $conn->query($sql);
 
-        <!-- Autres fiches en exemple -->
-        <section id="marc-bernard" class="info-card" style="background-color: #ffffff;">
-            <h2>Dr. Marc Bernard</h2>
-            <p>Voir les détails bientôt disponibles.</p>
-        </section>
+    if ($result === false) {
+        echo "<p style='color: red;'>Erreur SQL : " . htmlspecialchars($conn->error) . "</p>";
+    } elseif ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            echo '<section class="info-card" style="background: #fff; padding: 1.5rem; margin-bottom: 2rem; border-radius: 10px;">';
 
-        <section id="emma-robitaille" class="info-card" style="background-color: #ffffff;">
-            <h2>Dr. Emma Robitaille</h2>
-            <p>Voir les détails bientôt disponibles.</p>
-        </section>
+            // Fonction helper pour gérer les valeurs nulles
+            function safe_html($value) {
+                return $value !== null ? htmlspecialchars($value) : '';
+            }
 
-    </main>
+            echo '<h2>Dr. ' . safe_html($row['Prenom']) . ' ' . safe_html($row['Nom']) . '</h2>';
 
-    <!-- Importation du footer -->
-    <?php require 'includes/footer.php'; ?>
+            if (!empty($row['Photo'])) {
+                echo '<img src="' . safe_html($row['Photo']) . '" style="width: 200px; border-radius: 8px;" alt="Photo">';
+            }
 
+            if (!empty($row['Video'])) {
+                echo '<video width="320" height="240" controls style="margin-top: 1rem;">';
+                echo '<source src="' . safe_html($row['Video']) . '" type="video/mp4">';
+                echo 'Votre navigateur ne supporte pas la vidéo.';
+                echo '</video>';
+            }
+
+            echo '<p><strong>Email :</strong> ' . safe_html($row['Email']) . '</p>';
+            echo '<p><strong>Téléphone :</strong> ' . safe_html($row['Telephone']) . '</p>';
+            echo '<p><strong>Spécialité :</strong> ' . safe_html($row['Type']) . '</p>';
+            echo '<p><strong>Adresse :</strong> ' . 
+                 safe_html($row['Adresse']) . ', ' . 
+                 safe_html($row['CodePostal']) . ' ' . 
+                 safe_html($row['Ville']) . '</p>';
+            echo '<p><strong>Complément :</strong> ' . safe_html($row['InfosComplementaires']) . '</p>';
+            echo '<p><strong>Description :</strong> ' . safe_html($row['Description']) . '</p>';
+
+            echo '</section>';
+        }
+    } else {
+        echo "<p style='color: red;'>Aucun médecin généraliste trouvé.</p>";
+    }
+
+    $conn->close();
+    ?>
+</main>
+
+<?php require 'includes/footer.php'; ?>
 </body>
-
 </html>

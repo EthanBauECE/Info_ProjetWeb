@@ -554,7 +554,7 @@ footer p {
 .register-container .form-group input {
   width: 100%;
   padding: 12px 15px;
-  border-radius: 6px;
+  border-radius: 6px; 
   border: 1px solid #ccc;
   font-size: 1rem;
   transition: border-color 0.3s;

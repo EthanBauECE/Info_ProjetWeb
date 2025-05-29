@@ -31,15 +31,15 @@ if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $star
     exit;
 }
 
-$idPersonnelLaboGenerique = 0; // CONVENTION: IdPersonnel=0 pour les disponibilités de laboratoire
+// $idPersonnelLaboGenerique = 0; // Cette variable n'est plus nécessaire si on ne filtre plus sur IdPersonnel
+
 $now = new DateTime(); // Heure actuelle
 
 try {
-    // On filtre sur IdServiceLabo ET sur IdPersonnel (avec la valeur générique pour labo)
+    // MODIFICATION ICI : Suppression de la condition IdPersonnel = ?
     $sqlDispo = "SELECT ID, Date, HeureDebut, HeureFin, IdPersonnel, IdServiceLabo, Prix 
                  FROM dispo 
                  WHERE IdServiceLabo = ?
-                   AND IdPersonnel = ?  -- Filtre pour les disponibilités du laboratoire
                    AND Date >= ? 
                    AND Date <= ?
                  ORDER BY Date, HeureDebut";
@@ -51,7 +51,9 @@ try {
         exit;
     }
     
-    $stmtDispo->bind_param("iiss", $serviceId, $idPersonnelLaboGenerique, $startDateStr, $endDateStr); 
+    // MODIFICATION ICI : bind_param doit correspondre au nombre de '?'
+    // Il n'y a plus que 3 '?' : IdServiceLabo, Date, HeureDebut
+    $stmtDispo->bind_param("iss", $serviceId, $startDateStr, $endDateStr); 
     
     if (!$stmtDispo->execute()) {
         echo json_encode(['error' => 'Erreur exécution requête: ' . $stmtDispo->error, 'data' => $response_data]);

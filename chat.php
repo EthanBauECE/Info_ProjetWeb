@@ -350,10 +350,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
                         alert('Erreur lors de l\'envoi du message: ' + data.error);
                     }
                 })
-                .catch(error => { 
-                    console.error('Fetch error:', error);
-                    alert('Une erreur réseau est survenue.'); // Erreur réseau réelle (connexion, CORS, etc.)
-                });
+            
             }
 
             function fetchMessages(convId) {

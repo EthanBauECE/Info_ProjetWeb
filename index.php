@@ -27,7 +27,6 @@
             <h3>Urgence</h3>
             <p>Appelez-nous immédiatement pour toute urgence médicale 24/7.</p>
             <p><strong>+33 1 23 45 67 89</strong></p>
-            <a href="urgence.php">En savoir plus</a>
         </div>
         <div class="info-card">
             <h3>Emploi du temps</h3>

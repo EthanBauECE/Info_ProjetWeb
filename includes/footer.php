@@ -17,6 +17,7 @@
 <footer>
     <p>Contactez-nous : contact@medicare.omnes</p>
     <p>Téléphone : 01 23 45 67 89</p>
+    <p>Adresse : 10 rue des Médecins, Paris</p>
     <div id="map"></div>
 </footer>
 

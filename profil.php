@@ -1,13 +1,16 @@
 <?php
 session_start();
 
-// Si l'utilisateur n'est pas connecté, on redirige
 if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php");
+    header("Location: login.php?redirect=" . urlencode('profil.php'));
     exit();
 }
 
-// Connexion à la base de données
+if (isset($_SESSION["user_type"]) && $_SESSION["user_type"] === "admin") {
+    header("Location: admin_panel.php");
+    exit();
+}
+
 try {
     $pdo = new PDO("mysql:host=localhost;dbname=base_donne_web;charset=utf8", "root", "");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -15,30 +18,86 @@ try {
     die("Erreur de connexion BDD : " . $e->getMessage());
 }
 
-// Récupération de l'utilisateur connecté
 $user_id = $_SESSION["user_id"];
-$sql = "SELECT * FROM utilisateurs WHERE ID = ?";
+
+$sql = "SELECT ID, Nom, Prenom, Email, TypeCompte FROM utilisateurs WHERE ID = ?";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$user_id]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
-    die("Utilisateur non trouvé.");
+    session_destroy();
+    header("Location: login.php");
+    exit();
 }
 
-// Récupération du type de compte
 $type = $user["TypeCompte"];
-$infos_supp = [];
+$detailed_info = []; // Will hold all specific info including address
+$stats = [];
 
+// Fetch detailed information based on account type
 if ($type === "client") {
-    $stmt2 = $pdo->prepare("SELECT * FROM utilisateurs_client WHERE ID_Adresse = ?");
-    $stmt2->execute([$user_id]);
-    $infos_supp = $stmt2->fetch();
+    // Corrected WHERE clause: uc.ID instead of uc.ID_Utilisateur
+    // Removed a.Pays as it's not in the adresse table
+    $stmt_client = $pdo->prepare("
+        SELECT uc.Telephone, uc.CarteVitale,
+               a.Adresse AS AdresseLigne, a.Ville, a.CodePostal, a.InfosComplementaires
+        FROM utilisateurs_client uc
+        LEFT JOIN adresse a ON uc.ID_Adresse = a.ID
+        WHERE uc.ID = ?
+    ");
+    $stmt_client->execute([$user_id]);
+    $detailed_info = $stmt_client->fetch(PDO::FETCH_ASSOC) ?: [];
 
-} elseif ($type === "personnel") {
-    $stmt2 = $pdo->prepare("SELECT * FROM utilisateurs_personnel WHERE ID_Adresse = ?");
-    $stmt2->execute([$user_id]);
-    $infos_supp = $stmt2->fetch();
+    // Client stats
+    $stmt_rdv_past = $pdo->prepare("SELECT COUNT(*) FROM rdv WHERE ID_Client = ? AND CONCAT(DateRDV, ' ', HeureFin) < NOW()");
+    $stmt_rdv_past->execute([$user_id]);
+    $stats['rdv_past_count'] = $stmt_rdv_past->fetchColumn();
+
+    $stmt_rdv_upcoming = $pdo->prepare("SELECT COUNT(*) FROM rdv WHERE ID_Client = ? AND CONCAT(DateRDV, ' ', HeureDebut) >= NOW()");
+    $stmt_rdv_upcoming->execute([$user_id]);
+    $stats['rdv_upcoming_count'] = $stmt_rdv_upcoming->fetchColumn();
+
+} elseif ($type === "Personnel") { // Note: 'Personnel' capitalized as in the DB
+    // Corrected WHERE clause: up.ID instead of up.ID_Utilisateur
+    // Removed a.Pays as it's not in the adresse table
+    // Joined with 'cv' table to get CV content and renamed it to CV_Content for clarity
+    $stmt_personnel = $pdo->prepare("
+        SELECT up.Telephone, up.Description, up.Type AS Specialite, up.Photo, up.Video, cv.ContenuXML AS CV_Content,
+               a.Adresse AS AdresseLigne, a.Ville, a.CodePostal, a.InfosComplementaires
+        FROM utilisateurs_personnel up
+        LEFT JOIN adresse a ON up.ID_Adresse = a.ID
+        LEFT JOIN cv ON up.ID = cv.ID_Personnel
+        WHERE up.ID = ?
+    ");
+    $stmt_personnel->execute([$user_id]);
+    $detailed_info = $stmt_personnel->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    // Personnel stats
+    $stmt_rdv_personnel_upcoming = $pdo->prepare("SELECT COUNT(*) FROM rdv WHERE ID_Personnel = ? AND CONCAT(DateRDV, ' ', HeureDebut) >= NOW()");
+    $stmt_rdv_personnel_upcoming->execute([$user_id]);
+    $stats['personnel_rdv_upcoming_count'] = $stmt_rdv_personnel_upcoming->fetchColumn();
+
+    $stmt_dispo_personnel_upcoming = $pdo->prepare("SELECT COUNT(*) FROM dispo WHERE IdPersonnel = ? AND CONCAT(Date, ' ', HeureDebut) >= NOW()");
+    $stmt_dispo_personnel_upcoming->execute([$user_id]);
+    $stats['personnel_dispo_upcoming_count'] = $stmt_dispo_personnel_upcoming->fetchColumn();
+
+} elseif ($type === "admin") {
+    // Admin stats
+    $stats['total_users'] = $pdo->query("SELECT COUNT(*) FROM utilisateurs")->fetchColumn();
+    $stats['total_rdv'] = $pdo->query("SELECT COUNT(*) FROM rdv")->fetchColumn();
+    $stats['upcoming_rdv_site'] = $pdo->query("SELECT COUNT(*) FROM rdv WHERE CONCAT(DateRDV, ' ', HeureDebut) >= NOW()")->fetchColumn();
+    $stats['total_laboratoires'] = $pdo->query("SELECT COUNT(*) FROM laboratoire")->fetchColumn();
+    $stats['total_services_labo'] = $pdo->query("SELECT COUNT(*) FROM service_labo")->fetchColumn();
+}
+
+$success_message = isset($_SESSION['profile_success']) ? $_SESSION['profile_success'] : '';
+$error_message = isset($_SESSION['profile_error']) ? $_SESSION['profile_error'] : '';
+unset($_SESSION['profile_success']);
+unset($_SESSION['profile_error']);
+
+function safe_html($value) {
+    return $value !== null ? htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') : '';
 }
 ?>
 
@@ -48,52 +107,343 @@ if ($type === "client") {
 <body>
 <?php require 'includes/header.php'; ?>
 
-<main style="padding: 2rem; background-color: #f9f9f9;">
-    <div style="max-width: 700px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h2 style="text-align: center; color: #0a7abf; margin-bottom: 2rem;">Mon Profil</h2>
+<main class="profile-main">
+    <div class="profile-container">
+        <div class="profile-page-header">
+            <h2 class="profile-title">Mon Profil</h2>
+            <div class="account-type-badge-container">
+                 <span class="account-type-tag type-<?= strtolower(safe_html($type)) ?>"><?= safe_html(ucfirst($type)) ?></span>
+            </div>
+        </div>
 
-        <p><strong>Nom :</strong> <?= htmlspecialchars($user["Nom"]) ?></p>
-        <p><strong>Prénom :</strong> <?= htmlspecialchars($user["Prenom"]) ?></p>
-        <p><strong>Email :</strong> <?= htmlspecialchars($user["Email"]) ?></p>
-        <p><strong>Type de compte :</strong> <?= htmlspecialchars($type) ?></p>
 
-        <?php if ($type === "client") : ?>
-            <p><strong>Téléphone :</strong> <?= htmlspecialchars($infos_supp["Telephone"] ?? "Non renseigné") ?></p>
-            <p><strong>Carte Vitale :</strong> <?= htmlspecialchars($infos_supp["CarteVitale"] ?? "Non renseignée") ?></p>
-            <p><strong>ID Adresse :</strong> <?= htmlspecialchars($infos_supp["ID_Adresse"] ?? "Non renseignée") ?></p>
-
-        <?php elseif ($type === "personnel") : ?>
-            <p><strong>Téléphone :</strong> <?= htmlspecialchars($infos_supp["Telephone"] ?? "Non renseigné") ?></p>
-            <p><strong>Description :</strong> <?= htmlspecialchars($infos_supp["Description"] ?? "") ?></p>
-            <p><strong>Spécialité :</strong> <?= htmlspecialchars($infos_supp["Type"] ?? "") ?></p>
-            <p><strong>ID Adresse :</strong> <?= htmlspecialchars($infos_supp["ID_Adresse"] ?? "") ?></p>
-            <p><strong>Photo :</strong>
-                <?php if (!empty($infos_supp["Photo"])): ?>
-                    <img src="uploads/<?= htmlspecialchars($infos_supp["Photo"]) ?>" alt="Photo" height="60">
-                <?php else: ?>
-                    Aucune photo
-                <?php endif; ?>
-            </p>
-            <p><strong>Vidéo :</strong>
-                <?php if (!empty($infos_supp["Video"])): ?>
-                    <a href="uploads/<?= htmlspecialchars($infos_supp["Video"]) ?>" target="_blank">Voir la vidéo</a>
-                <?php else: ?>
-                    Aucune vidéo
-                <?php endif; ?>
-            </p>
-
-        <?php else: ?>
-            <p>Ceci est un compte administrateur.</p>
+        <?php if (!empty($success_message)): ?>
+            <div class="profile-alert success"><?= safe_html($success_message) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($error_message)): ?>
+            <div class="profile-alert error"><?= safe_html($error_message) ?></div>
         <?php endif; ?>
 
-        <div style="text-align: center; margin-top: 2rem;">
-            <a href="logout.php" style="display: inline-block; padding: 12px 25px; background-color: #d9534f; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Se déconnecter
-            </a>
+        <section class="profile-section">
+            <h3 class="section-title">Informations Générales du Compte</h3>
+            <div class="profile-details-grid">
+                <p class="profile-detail-item"><strong>Nom :</strong> <?= safe_html($user["Nom"]) ?></p>
+                <p class="profile-detail-item"><strong>Prénom :</strong> <?= safe_html($user["Prenom"]) ?></p>
+                <p class="profile-detail-item full-width"><strong>Email :</strong> <?= safe_html($user["Email"]) ?></p>
+            </div>
+        </section>
+
+        <?php if ($type === "admin"): ?>
+            <section class="profile-section">
+                <h3 class="section-title">Résumé Administratif</h3>
+                 <div class="profile-details-grid">
+                    <p class="profile-detail-item"><strong>Comptes sur le site :</strong> <?= safe_html($stats['total_users'] ?? '0') ?></p>
+                    <p class="profile-detail-item"><strong>Total RDV enregistrés :</strong> <?= safe_html($stats['total_rdv'] ?? '0') ?></p>
+                    <p class="profile-detail-item"><strong>Laboratoires partenaires :</strong> <?= safe_html($stats['total_laboratoires'] ?? '0') ?></p>
+                    <p class="profile-detail-item"><strong>Services proposés :</strong> <?= safe_html($stats['total_services_labo'] ?? '0') ?></p>
+                    <p class="profile-detail-item full-width"><strong>RDV à venir (site) :</strong> <?= safe_html($stats['upcoming_rdv_site'] ?? '0') ?></p>
+                </div>
+            </section>
+
+        <?php elseif ($type === "Personnel") : ?>
+            <section class="profile-section">
+                <h3 class="section-title">Détails Professionnels</h3>
+                <?php if (!empty($detailed_info["Photo"])): ?>
+                    <div class="profile-photo-wrapper">
+                        <img src="uploads/<?= safe_html($detailed_info["Photo"]) ?>" alt="Photo de profil" class="profile-photo-display">
+                    </div>
+                <?php endif; ?>
+                <div class="profile-details-grid">
+                    <p class="profile-detail-item"><strong>Téléphone :</strong> <?= safe_html($detailed_info["Telephone"] ?? "Non renseigné") ?></p>
+                    <p class="profile-detail-item"><strong>Spécialité / Type :</strong> <?= safe_html($detailed_info["Specialite"] ?? "Non renseignée") ?></p>
+
+                    <?php if (!empty($detailed_info["Description"])): ?>
+                        <p class="profile-detail-item full-width"><strong>Description :</strong><br><span class="description-text"><?= nl2br(safe_html($detailed_info["Description"])) ?></span></p>
+                    <?php endif; ?>
+
+                    <?php if (!empty($detailed_info["AdresseLigne"])): ?>
+                        <p class="profile-detail-item full-width"><strong>Adresse Cabinet :</strong>
+                            <span class="address-block">
+                                <?= safe_html($detailed_info["AdresseLigne"]) ?><br>
+                                <?= safe_html($detailed_info["CodePostal"] ?? '') ?> <?= safe_html($detailed_info["Ville"] ?? '') ?>
+                                <?php // Removed Pays from here as it's not in the DB schema ?>
+                                <?php if (!empty($detailed_info["InfosComplementaires"])): ?>
+                                    <br><em class="address-complement"><?= safe_html($detailed_info["InfosComplementaires"]) ?></em>
+                                <?php endif; ?>
+                            </span>
+                        </p>
+                    <?php else: ?>
+                        <p class="profile-detail-item full-width"><strong>Adresse Cabinet :</strong> Non renseignée</p>
+                    <?php endif; ?>
+
+                     <?php if (!empty($detailed_info["Video"])): ?>
+                        <p class="profile-detail-item"><strong>Vidéo :</strong>
+                            <a href="uploads/<?= safe_html($detailed_info["Video"]) ?>" target="_blank" class="video-link">Voir la vidéo</a>
+                        </p>
+                    <?php endif; ?>
+                     <?php if (!empty($detailed_info["CV_Content"])): // Changed from CV to CV_Content ?>
+                        <p class="profile-detail-item"><strong>CV :</strong>
+                            CV Disponible
+                        </p>
+                    <?php else: ?>
+                        <p class="profile-detail-item"><strong>CV :</strong> Non renseigné</p>
+                    <?php endif; ?>
+                </div>
+            </section>
+            <section class="profile-section">
+                <h3 class="section-title">Activité Professionnelle</h3>
+                <div class="profile-details-grid">
+                    <p class="profile-detail-item"><strong>Vos RDV à venir :</strong> <?= safe_html($stats['personnel_rdv_upcoming_count'] ?? '0'); ?> </p>
+                    <p class="profile-detail-item"><strong>Vos créneaux libres à venir :</strong> <?= safe_html($stats['personnel_dispo_upcoming_count'] ?? '0'); ?></p>
+                </div>
+            </section>
+
+        <?php elseif ($type === "client") : ?>
+            <section class="profile-section">
+                <h3 class="section-title">Détails Personnels</h3>
+                <div class="profile-details-grid">
+                    <p class="profile-detail-item"><strong>Téléphone :</strong> <?= safe_html($detailed_info["Telephone"] ?? "Non renseigné") ?></p>
+                    <p class="profile-detail-item"><strong>Carte Vitale :</strong> <?= safe_html($detailed_info["CarteVitale"] ?? "Non renseignée") ?></p>
+                    <?php if (!empty($detailed_info["AdresseLigne"])): ?>
+                        <p class="profile-detail-item full-width"><strong>Adresse :</strong>
+                             <span class="address-block">
+                                <?= safe_html($detailed_info["AdresseLigne"]) ?><br>
+                                <?= safe_html($detailed_info["CodePostal"] ?? '') ?> <?= safe_html($detailed_info["Ville"] ?? '') ?>
+                                <?php // Removed Pays from here as it's not in the DB schema ?>
+                                <?php if (!empty($detailed_info["InfosComplementaires"])): ?>
+                                    <br><em class="address-complement"><?= safe_html($detailed_info["InfosComplementaires"]) ?></em>
+                                <?php endif; ?>
+                            </span>
+                        </p>
+                    <?php else: ?>
+                        <p class="profile-detail-item full-width"><strong>Adresse :</strong> Non renseignée</p>
+                    <?php endif; ?>
+                </div>
+            </section>
+            <section class="profile-section">
+                <h3 class="section-title">Vos Rendez-vous</h3>
+                <div class="profile-details-grid">
+                    <p class="profile-detail-item"><strong>Rendez-vous passés :</strong> <?= safe_html($stats['rdv_past_count'] ?? '0'); ?></p>
+                    <p class="profile-detail-item"><strong>Rendez-vous à venir :</strong> <?= safe_html($stats['rdv_upcoming_count'] ?? '0'); ?></p>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <div class="profile-actions">
+             <a href="modifier_profil.php" class="btn-profile-action btn-edit-profile">Modifier mon compte</a>
+            <a href="logout.php" class="btn-profile-action btn-logout">Se déconnecter</a>
         </div>
     </div>
 </main>
 
 <?php require 'includes/footer.php'; ?>
+
+<style>
+/* Re-using and adapting your existing styles for profil.php */
+.profile-main {
+    padding: 2rem;
+    background-color: #f2f2f2;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - 160px);
+}
+
+.profile-container {
+    max-width: 750px;
+    width: 100%;
+    margin: 1rem auto;
+    background: #fff;
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+.profile-page-header { /* New wrapper for title and badge */
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.profile-title {
+    color: #0a7abf;
+    margin-bottom: 0.5rem; /* Reduced margin as badge is below */
+    font-size: 2.2rem;
+    font-weight: 600;
+}
+.account-type-badge-container {
+    margin-top: 0.5rem; /* Space between title and badge */
+}
+
+
+.profile-section {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: #0a7abf;
+    font-size: 1.4rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid #eaf5ff;
+}
+
+.profile-details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem 1.5rem; /* Adjusted gap */
+}
+
+@media (min-width: 600px) {
+    .profile-details-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .profile-detail-item.full-width {
+        grid-column: 1 / -1;
+    }
+}
+
+.profile-detail-item {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #495057;
+    padding-bottom: 0.5rem;
+    line-height: 1.6; /* Improved line height */
+}
+
+.profile-detail-item strong {
+    color: #0a7abf;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    display: inline-block;
+    min-width: 120px;
+}
+.description-text, .address-block {
+    display: block; /* Ensure these start on a new line after the strong tag */
+    margin-left: 10px; /* Indent the actual content slightly */
+    margin-top: 4px;
+}
+
+
+.account-type-tag {
+    display: inline-block;
+    padding: 0.4em 0.9em; /* Slightly more padding */
+    border-radius: 15px; /* More pill-like */
+    font-weight: 500; /* Adjusted weight */
+    font-size: 0.9em;
+    color: white;
+    text-transform: capitalize;
+}
+.account-type-tag.type-client { background-color: #28a745; }
+.account-type-tag.type-personnel { background-color: #17a2b8; }
+.account-type-tag.type-admin { background-color: #6c757d; } /* Grey for admin */
+
+.profile-photo-wrapper {
+    text-align: center; /* Center the photo */
+    margin-bottom: 1rem;
+}
+.profile-photo-display {
+    max-width: 150px; /* Slightly larger */
+    height: 150px;
+    object-fit: cover; /* Ensure photo covers the area well */
+    border-radius: 50%; /* Circular photo */
+    border: 3px solid #0a7abf; /* Border matching theme */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.video-link, .cv-link { /* Combined styles for links */
+    display: inline-block;
+    background-color: #007bff;
+    color: white !important; /* Ensure white text */
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    margin-top: 5px;
+}
+.video-link:hover, .cv-link:hover {
+    background-color: #0056b3;
+    color: white !important;
+}
+.cv-link { /* Specific if needed */
+    background-color: #5a6268; /* Different color for CV maybe */
+}
+.cv-link:hover {
+    background-color: #474c51;
+}
+
+
+.address-complement {
+    font-size: 0.9em;
+    color: #6c757d;
+    display: block;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.profile-actions {
+    text-align: center;
+    margin-top: 3rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.btn-profile-action {
+    display: inline-block;
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    min-width: 180px;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-edit-profile {
+    background-color: #0a7abf;
+}
+.btn-edit-profile:hover {
+    background-color: #075c92;
+    transform: translateY(-2px);
+}
+
+.btn-logout {
+    background-color: #dc3545;
+}
+.btn-logout:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+.profile-alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: 500;
+}
+.profile-alert.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.profile-alert.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+</style>
 </body>
 </html>

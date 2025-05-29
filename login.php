@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Si l'utilisateur est déjà connecté, on le redirige vers l'accueil
 if (isset($_SESSION["user_id"])) {
-    
+    header("Location: index.php"); // FIX: Added missing header location
     exit();
 }
 
@@ -34,20 +34,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // CORRECTION : On utilise le tableau $user qui contient les données de la BDD
     // et on utilise des noms de session cohérents.
-    $_SESSION["user_id"] = $user['ID']; 
+    $_SESSION["user_id"] = $user['ID'];
     $_SESSION["user_prenom"] = $user['Prenom'];
-    $_SESSION["nom"] = $user['Nom'];
+    $_SESSION["nom"] = $user['Nom']; // You had this, good
     $_SESSION["email"] = $user['Email'];
-    $_SESSION["user_type"] = $user['TypeCompte']; // <-- LA LIGNE MANQUANTE EST AJOUTÉE ICI
+    $_SESSION["user_type"] = $user['TypeCompte']; // MAKE SURE THIS 
 
 
     // Pour les champs qui peuvent être vides, on ajoute une vérification
-    $_SESSION["adresse"] = isset($user['Adresse']) ? $user['Adresse'] : 'Non renseignée';
-    $_SESSION["carte_vitale"] = isset($user['CarteVitale']) ? $user['CarteVitale'] : 'Non renseignée';
+    // These values will be fetched more reliably from the database when accessing the profile
+    // $_SESSION["adresse"] = isset($user['Adresse']) ? $user['Adresse'] : 'Non renseignée'; 
+    // $_SESSION["carte_vitale"] = isset($user['CarteVitale']) ? $user['CarteVitale'] : 'Non renseignée';
 
 
     // Redirection vers la page d'accueil
-    header("Location: index.php");
+    // Handle redirect parameter if present (from login.php?redirect=...)
+    $redirect_page = 'index.php';
+    if (isset($_GET['redirect']) && !empty($_GET['redirect'])) {
+        $redirect_page = urldecode($_GET['redirect']);
+    }
+    header("Location: " . $redirect_page);
     exit();
     }        else {
         // Identifiants incorrects
@@ -67,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <?php if (!empty($error_message)) : ?>
                 <p style="color: red;"><?php echo $error_message; ?></p>
             <?php endif; ?>
-            <form action="login.php" method="post">
+            <form action="login.php<?php echo isset($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="post">
                 <div class="form-group">
                     <label for="email">Adresse E-mail</label>
                     <input type="email" id="email" name="email" placeholder="Entrez votre e-mail" required>

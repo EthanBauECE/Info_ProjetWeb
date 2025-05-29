@@ -7,10 +7,36 @@
 
 /* __________________________________/ INDEX \__________________________________*/
 
+html {
+  height: 100%;
+}
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f2f2f2;
-  color: #333;
+  min-height: 100%; /* Ensures body takes at least full viewport height */
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', sans-serif; /* Moved from your original body style */
+  background-color: #f2f2f2; /* Moved from your original body style */
+  color: #333; /* Moved from your original body style */
+  margin: 0; /* Ensure no default margin on body */
+}
+
+main { /* Targeting the <main> tag generally */
+  flex-grow: 1; /* This is the key property */
+  /* Your existing padding for main content, e.g., from parcourir.txt */
+  /* padding: 2rem;  -- This can be page-specific */
+  /* background-color: #f9f9f9; -- This can be page-specific */
+}
+
+.parcourir-main-content {
+    padding: 2rem;
+    background-color: #f9f9f9;
+}
+.parcourir-main-content .info-section {
+    /* Your existing info-section styles will apply */
+}
+.parcourir-main-content .info-card {
+    /* Your existing info-card styles will apply */
 }
 
 /* __________________________________/ HEADER \__________________________________*/
@@ -371,8 +397,9 @@ nav li.dropdown {
 footer {
   background-color: #0a7abf;
   color: white;
-  padding: 2rem;
+  padding: 2rem 1rem;
   text-align: center;
+  flex-shrink: 0; /* Prevents footer from shrinking if content is too large */
 }
 
 footer p {
@@ -423,6 +450,8 @@ footer p {
   color: #333;
 }
 
+
+
 .form-group input {
   width: 100%;
   padding: 12px 15px;
@@ -430,6 +459,44 @@ footer p {
   border: 1px solid #ccc;
   font-size: 1rem;
   transition: border-color 0.3s;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center; /* Centre les éléments verticalement */
+    gap: 15px; /* Ajoute de l'espace entre les éléments */
+    /* Autres styles existants pour nav-right */
+}
+
+/* Style de base pour le bouton admin */
+.admin-button {
+    background-color: #007bff; /* Ou votre couleur d'accent */
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+.admin-button:hover {
+    background-color: #0056b3; /* Couleur plus foncée au survol */
+}
+
+/* Si vous avez changé la classe du lien principal */
+.account-profile-link {
+    /* Styles pour l'icône et le texte du compte */
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit; /* Ou une couleur spécifique */
+}
+
+.account-profile-link .account-icon {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espace entre l'image et le prénom */
 }
 
 .form-group input:focus {
@@ -603,6 +670,34 @@ footer p {
   padding: 4rem 2rem;
   background-color: #f2f2f2;
   min-height: 80vh;
+}
+
+/* Styles pour les créneaux de disponibilité passés ou non réservables */
+.time-slot-button.past-slot {
+    background-color: #e9ecef !important; /* Gris très clair */
+    color: #6c757d !important; /* Texte gris foncé */
+    border-color: #ced4da !important; /* Bordure grise */
+    cursor: not-allowed !important; /* Curseur "interdit" */
+    opacity: 0.7; /* Légèrement transparent */
+    text-decoration: line-through; /* Optionnel: barre le texte pour plus de clarté */
+    pointer-events: none; /* Empêche tout événement de souris (clic, survol) */
+    box-shadow: none; /* Pas d'ombre portée */
+}
+
+/* Assurez-vous que le prix dans le créneau passé est aussi grisé */
+.time-slot-button.past-slot .slot-price {
+    color: #888 !important; /* Une nuance de gris plus foncée pour le prix */
+}
+
+/* Ajustement pour les boutons désactivés en général, si non déjà fait */
+/* Le .time-slot-button:disabled peut aussi être utilisé, mais past-slot est plus spécifique */
+.time-slot-button:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    border-color: #ced4da;
+    color: #6c757d;
+    opacity: 0.7;
+    box-shadow: none;
 }
 
 .register-container {

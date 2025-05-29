@@ -155,6 +155,12 @@ try {
         .service-select-button.active-service { background-color: #0a7abf; color: white; border-color: #005c99; transform: translateY(0); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
         .service-price { font-size: 0.85em; color: #6c757d; margin-left: 6px; }
         .service-select-button:hover .service-price, .service-select-button.active-service .service-price { color: #e0f0ff; }
+        .labo-bricks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
 
         /* STYLES CALENDRIER (identiques aux versions précédentes) */
         .lab-calendar-container { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px dashed #d4eaff; display: none; }
@@ -173,7 +179,24 @@ try {
         .time-slot-button.selected { background-color: #28a745 !important; color: white !important; border-color: #1e7e34 !important; transform: scale(1.02); box-shadow: 0 3px 7px rgba(40,167,69,0.35); }
         .time-slot-button.selected .slot-price { color: #f0f8ff; }
         .time-slot-button:hover:not(.selected) { background-color: #cfe2ff; border-color: #9fceff; transform: translateY(-1px); }
-        .time-slot-button:disabled { background-color: #e9ecef; cursor: not-allowed; border-color: #ced4da; color: #6c757d; opacity:0.7; }
+        
+        /* Styles pour les créneaux passés (NON CLICABLES) */
+        .time-slot-button.past-slot {
+            background-color: #e9ecef !important; /* Gris très clair */
+            color: #6c757d !important; /* Texte gris foncé */
+            border-color: #ced4da !important; /* Bordure grise */
+            cursor: not-allowed !important; /* Curseur "interdit" */
+            opacity: 0.7; /* Légèrement transparent */
+            text-decoration: line-through; /* Optionnel: barre le texte pour plus de clarté */
+            pointer-events: none; /* Empêche tout événement de souris (clic, survol) */
+            box-shadow: none; /* Pas d'ombre portée */
+        }
+        /* Assurez-vous que le prix dans le créneau passé est aussi grisé */
+        .time-slot-button.past-slot .slot-price {
+            color: #888 !important; /* Une nuance de gris plus foncée pour le prix */
+        }
+        /* Ajustement pour les boutons désactivés en général, si non déjà fait */
+        .time-slot-button:disabled { background-color: #ccc; cursor: not-allowed; border-color: #bbb; color: #666; opacity:0.7; }
         
         .lab-actions-container { display: flex; justify-content: center; gap: 1rem; padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid #e9ecef; }
         .btn-action.btn-rdv { background-image: linear-gradient(to right, #0062E6 0%, #33AEFF 100%); color: white; padding: 12px 30px; font-size: 1.05rem; font-weight: 600; border: none; border-radius: 25px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); text-transform: uppercase; letter-spacing: 1px; }
@@ -187,10 +210,10 @@ try {
     <?php require 'includes/header.php'; ?>
 
     <main class="main-content-page">
-        <h1>Nos Laboratoires Partenaires</h1>
+        <h1>Laboratoires</h1>
         <div class="labo-bricks-list">
             <?php if (empty($laboratoires)): ?>
-                <p style="text-align: center; font-size: 1.1em; color: #6c757d;">Aucun laboratoire n'est disponible pour le moment.</p>
+                <p style="text-align: center; font-size: 1.1em; color: #6c757d;">Aucun laboratoire n'is disponible pour le moment.</p>
             <?php else: ?>
             <?php foreach ($laboratoires as $labo): $laboId = safe_html($labo['ID']); ?>
                 <div class="labo-card" id="labo-<?php echo $laboId; ?>">
@@ -258,7 +281,7 @@ try {
                             <input type="hidden" name="selected_service_nom" id="selected-service-nom-<?php echo $laboId; ?>">
                             <input type="hidden" name="selected_date_db" id="selected-date-db-lab-<?php echo $laboId; ?>">
                             <input type="hidden" name="selected_heure_debut_db" id="selected-heure-debut-db-lab-<?php echo $laboId; ?>">
-                            <input type="hidden" name="selected_heure_fin_db" id="selected-heure-fin-db-lab-<?php echo $laboId; ?>">
+                            <input type="hidden" name="selected_heure_fin_db" id="selected-heure-fin-db-lab-<?php echo $laboId; ?>"> <!-- Corrected ID here in HTML -->
                             <input type="hidden" name="selected_prix" id="selected-prix-lab-<?php echo $laboId; ?>">
                             <div class="lab-actions-container">
                                 <?php if ($user_is_logged_in): ?>
@@ -278,9 +301,6 @@ try {
     <?php require 'includes/footer.php'; ?>
 
 <script>
-// ... (JavaScript identique à la version précédente)
-// Rappel: Vérifiez que get_disponibilites_labo.php est bien configuré
-// pour utiliser IdPersonnel = 0 (ou votre convention) pour les labos.
 document.addEventListener('DOMContentLoaded', function() {
     function getWeekDates(date) {
         const startOfWeek = new Date(date);
@@ -335,7 +355,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!slotsByTime[heureDebut][dayIndex]) slotsByTime[heureDebut][dayIndex] = [];
                     slotsByTime[heureDebut][dayIndex].push({
                         heureDebut: dispo.HeureDebut, heureFin: dispo.HeureFin,
-                        prix: dispo.Prix, idServiceLabo: dispo.IdServiceLabo, date: dispo.Date
+                        prix: dispo.Prix, idServiceLabo: dispo.IdServiceLabo, date: dispo.Date,
+                        status: dispo.status // NOUVEAU : Récupérer le statut
                     });
                 }
             });
@@ -357,13 +378,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         const slotData = daySlots[0]; 
                         const slotButton = document.createElement('button');
                         slotButton.classList.add('time-slot-button');
-                        slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
-                        slotButton.dataset.dateDb = slotData.date;
-                        slotButton.dataset.heureDebutDb = slotData.heureDebut;
-                        slotButton.dataset.heureFinDb = slotData.heureFin;
-                        slotButton.dataset.prix = slotData.prix; 
-                        slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
-                        slotButton.onclick = function() { selectLabSlot(laboId, this); };
+
+                        // --- NOUVEAU : Logique pour les créneaux passés ---
+                        if (slotData.status === 'past') {
+                            slotButton.classList.add('past-slot'); // Applique le style gris
+                            slotButton.disabled = true; // Rend le bouton non cliquable
+                            slotButton.innerHTML = `Passé<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
+                        } else {
+                            // Créneaux disponibles
+                            slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">(${parseFloat(slotData.prix).toFixed(2)} €)</span>`;
+                            slotButton.dataset.dateDb = slotData.date;
+                            slotButton.dataset.heureDebutDb = slotData.heureDebut;
+                            slotButton.dataset.heureFinDb = slotData.heureFin;
+                            slotButton.dataset.prix = slotData.prix; 
+                            slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
+                            slotButton.onclick = function() { selectLabSlot(laboId, this); };
+                        }
+                        // --- FIN NOUVEAU ---
+
                         td.appendChild(slotButton);
                     } else { td.innerHTML = ' '; }
                 });
@@ -380,8 +412,8 @@ document.addEventListener('DOMContentLoaded', function() {
         form.querySelector(`#selected-service-nom-${laboId}`).value = serviceNom;
         form.querySelector(`#selected-prix-lab-${laboId}`).value = ''; 
         form.querySelector(`#selected-date-db-lab-${laboId}`).value = '';
-        form.querySelector(`#selected-heure-debut-db-lab-${laboId}`).value = '';
-        form.querySelector(`#selected-heure-fin-db-lab-${laboId}`).value = '';
+        // CORRECTION DE L'ERREUR ICI : "selected-heure-fin-db-lab" au lieu de "selected-heure_fin_db-lab"
+        form.querySelector(`#selected-heure-fin-db-lab-${laboId}`).value = ''; 
     }
 
     function fetchLabAvailabilitiesAndRender(laboId, serviceId, serviceNom, servicePrixBase, dateRef) {
@@ -439,7 +471,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById(`form-lab-${laboId}`);
         form.querySelector(`#selected-date-db-lab-${laboId}`).value = slotButtonElement.dataset.dateDb;
         form.querySelector(`#selected-heure-debut-db-lab-${laboId}`).value = slotButtonElement.dataset.heureDebutDb;
-        form.querySelector(`#selected-heure-fin-db-lab-${laboId}`).value = slotButtonElement.dataset.heureFinDb;
+        // CORRECTION DE L'ERREUR ICI : "selected-heure-fin-db-lab" au lieu de "selected-heure_fin_db-lab"
+        form.querySelector(`#selected-heure-fin-db-lab-${laboId}`).value = slotButtonElement.dataset.heureFinDb; 
         form.querySelector(`#selected-prix-lab-${laboId}`).value = slotButtonElement.dataset.prix; 
         const btnRdv = form.querySelector(`#btn-rdv-lab-${laboId}`);
         if (btnRdv) {
@@ -470,14 +503,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentLabCalendarDate[laboId] && currentLabSelectedService[laboId]) {
                 currentLabCalendarDate[laboId].setDate(currentLabCalendarDate[laboId].getDate() - 7);
                 const service = currentLabSelectedService[laboId];
-                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prix, currentLabCalendarDate[laboId]);
+                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prixBase, currentLabCalendarDate[laboId]); // Pass prixBase
             }
         });
         container.querySelector('.next-week').addEventListener('click', function() {
              if (currentLabCalendarDate[laboId] && currentLabSelectedService[laboId]) {
                 currentLabCalendarDate[laboId].setDate(currentLabCalendarDate[laboId].getDate() + 7);
                 const service = currentLabSelectedService[laboId];
-                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prix, currentLabCalendarDate[laboId]);
+                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prixBase, currentLabCalendarDate[laboId]); // Pass prixBase
             }
         });
     });

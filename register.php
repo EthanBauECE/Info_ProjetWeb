@@ -19,12 +19,24 @@
                     <input type="text" id="prenom" name="prenom" placeholder="Entrez votre prénom" required>
                 </div>
                 <div class="form-group">
-                    <label for="adresse">Adresse</label>
-                    <input type="text" id="adresse" name="adresse" placeholder="Entrez votre adresse complète" required>
-                </div>
-                <div class="form-group">
                     <label for="email">E-mail</label>
                     <input type="email" id="email" name="email" placeholder="Entrez votre e-mail" required>
+                </div>
+                <div class="form-group">
+                    <label for="adresse_rue">Adresse (N° et Rue)</label>
+                    <input type="text" id="adresse_rue" name="adresse_rue" placeholder="Ex: 123 Rue de la Paix" required>
+                </div>
+                <div class="form-group">
+                    <label for="ville">Ville</label>
+                    <input type="text" id="ville" name="ville" placeholder="Ex: Paris" required>
+                </div>
+                <div class="form-group">
+                    <label for="code_postal">Code Postal</label>
+                    <input type="text" id="code_postal" name="code_postal" placeholder="Ex: 75001" required maxlength="5" pattern="\d{5}" title="Cinq chiffres requis">
+                </div>
+                <div class="form-group">
+                    <label for="infos_complementaires">Informations Complémentaires (optionnel)</label>
+                    <input type="text" id="infos_complementaires" name="infos_complementaires" placeholder="Ex: Appt 42, Bâtiment C">
                 </div>
                 <div class="form-group">
                     <label for="carte_vitale">Carte Vitale</label>

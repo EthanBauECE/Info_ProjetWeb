@@ -1,6 +1,6 @@
 <?php
 session_start();
-error_reporting(E_ALL); 
+error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 function safe_html($value) {
@@ -21,6 +21,15 @@ $message = '';
 $pending_rdv_details = null;
 $form_errors = []; // Pour stocker les erreurs de validation du formulaire de paiement
 
+// NOUVEAU BLOC DE VÉRIFICATION DU TYPE DE COMPTE
+$is_personnel_account = false;
+if (isset($_SESSION["user_type"]) && $_SESSION["user_type"] === "Personnel") { // Assurez-vous que 'Personnel' correspond à la valeur stockée dans votre DB
+    $is_personnel_account = true;
+    $message = "<p style='color:red;'>Vous ne pouvez pas réserver de rendez-vous avec un compte professionnel. Veuillez vous connecter avec un compte client ou en créer un.</p>";
+    unset($_SESSION['pending_rdv']); // Empêche l'affichage du résumé et du formulaire de paiement
+}
+// FIN NOUVEAU BLOC
+
 $conn = new mysqli("localhost", "root", "", "base_donne_web");
 if ($conn->connect_error) {
     die("Erreur de connexion BDD : " . $conn->connect_error); 
@@ -28,7 +37,8 @@ if ($conn->connect_error) {
 $conn->set_charset("utf8");
 
 // Étape 1: Traiter le POST initial pour charger les détails du RDV en session
-if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) { 
+// Ajoute la condition `!$is_personnel_account` ici
+if (!$is_personnel_account && $_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) { 
     unset($_SESSION['pending_rdv']); 
     if (isset($_POST['type_rdv']) && $_POST['type_rdv'] === 'laboratoire') {
         $_SESSION['pending_rdv'] = [
@@ -60,7 +70,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) {
 }
 
 // Étape 2: Traiter l'action de "paiement"
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'payer') {
+// Ajoute la condition `!$is_personnel_account` ici
+if (!$is_personnel_account && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'payer') {
     if (isset($_SESSION['pending_rdv'])) {
         $rdvDetails = $_SESSION['pending_rdv'];
         
@@ -201,7 +212,17 @@ require 'includes/head.php';
         
         <?php if (!empty($message)) echo $message; ?>
 
-        <?php if ($pending_rdv_details && (empty($message) || !empty($form_errors)) ): // Afficher si RDV en attente ET (pas de message d'erreur global OU il y a des erreurs de formulaire) ?>
+        <?php 
+        // NOUVEAU BLOC D'AFFICHAGE CONDITIONNEL
+        if ($is_personnel_account): // Si c'est un compte personnel, affiche UNIQUEMENT le message d'erreur et le bouton
+        ?>
+            <div style="text-align:center; margin-top: 20px;">
+                <a href="index.php" class="login-button" style="display:inline-block;">Retour à l'accueil</a>
+            </div>
+        <?php 
+        // FIN NOUVEAU BLOC
+        elseif ($pending_rdv_details && (empty($message) || !empty($form_errors)) ): // Afficher si RDV en attente ET (pas de message d'erreur global OU il y a des erreurs de formulaire)
+        ?>
             <h4 style="margin-top:1.5rem; margin-bottom:1rem; color:#007bff;">Résumé de votre réservation :</h4>
             <?php if ($pending_rdv_details['type'] === 'laboratoire'): ?>
                 <p><strong>Laboratoire :</strong> <?php echo safe_html($pending_rdv_details['labo_nom']); ?></p>
@@ -284,7 +305,7 @@ require 'includes/head.php';
                 
                 <button type="submit" class="login-button" style="font-size: 1.1em; padding: 15px;">Payer et Confirmer le RDV</button>
             </form>
-        <?php elseif (empty($message)): ?>
+        <?php elseif (empty($message)): // Message si aucun RDV en attente (et pas d'erreur spécifique) ?>
              <p style="text-align:center;">Aucun rendez-vous en cours de confirmation. Veuillez sélectionner un créneau.</p>
              <p style="text-align:center; margin-top:1rem;">
                 <a href="medecine_general.php" class="btn-action" style="background-color:#007bff; color:white; padding:10px 15px; border-radius:5px; text-decoration:none;">Voir Médecins</a>

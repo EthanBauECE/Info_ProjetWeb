@@ -190,7 +190,23 @@ $resultMedecins = $conn->query($sqlMedecins);
             background-color: #d4f8e0;
             border-color: #a3e9b9;
         }
-        .time-slot-button:disabled { /* Style pour le bouton RDV désactivé */
+        /* Style pour les créneaux passés (NON CLICABLES) */
+        .time-slot-button.past-slot {
+            background-color: #e9ecef !important; /* Gris très clair */
+            color: #6c757d !important; /* Texte gris foncé */
+            border-color: #ced4da !important; /* Bordure grise */
+            cursor: not-allowed !important; /* Curseur "interdit" */
+            opacity: 0.7; /* Légèrement transparent */
+            text-decoration: line-through; /* Optionnel: barre le texte pour plus de clarté */
+            pointer-events: none; /* Empêche tout événement de souris (clic, survol) */
+            box-shadow: none; /* Pas d'ombre portée */
+        }
+        /* Assurez-vous que le prix dans le créneau passé est aussi grisé */
+        .time-slot-button.past-slot .slot-price {
+            color: #888 !important; /* Une nuance de gris plus foncée pour le prix */
+        }
+        /* Style pour les boutons désactivés en général (si déjà présent ailleurs, ajuster la spécificité) */
+        .time-slot-button:disabled {
              background-color: #ccc;
              cursor: not-allowed;
              border-color: #bbb;
@@ -299,7 +315,7 @@ $resultMedecins = $conn->query($sqlMedecins);
                         <?php else: ?>
                             <a href="login.php?redirect=medecine_general.php" class="btn-action btn-rdv" style="background-color:#007bff;">Se connecter pour prendre RDV</a>
                         <?php endif; ?>
-                        <a href="communiquer.php?id=<?php echo $idMedecin; ?>" class="btn-action btn-communiquer">Communiquer</a>
+                        <a href="chat.php?target_id=<?php echo $idMedecin; ?>" class="btn-action btn-communiquer">Communiquer</a>
                         <a href="cv_medecin.php?id=<?php echo $idMedecin; ?>" class="btn-action btn-cv">Voir CV</a>
                     </div>
                 </form>
@@ -384,7 +400,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     heureFin: dispo.HeureFin,     // HH:MM:SS
                     prix: dispo.Prix,
                     idServiceLabo: dispo.IdServiceLabo,
-                    date: dispo.Date // YYYY-MM-DD
+                    date: dispo.Date, // YYYY-MM-DD
+                    status: dispo.status // NOUVEAU : Récupérer le statut
                 });
             }
         });
@@ -399,6 +416,8 @@ document.addEventListener('DOMContentLoaded', function() {
             td.textContent = "Aucun créneau disponible pour cette semaine.";
             td.style.textAlign = "center";
             td.style.padding = "10px";
+            td.style.fontStyle = "italic";
+            td.style.color = "#6c757d";
         } else {
             sortedTimes.forEach(heureDebutAffichage => { // ex: "09:00"
                 const tr = calendarBody.insertRow();
@@ -409,22 +428,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 slotsByTime[heureDebutAffichage].forEach((daySlots, dayIndex) => {
                     const td = tr.insertCell();
                     if (daySlots && daySlots.length > 0) {
-                        // Pour cette version, on ne prend que le premier slot s'il y en a plusieurs (ne devrait pas arriver si les créneaux ne se chevauchent pas)
                         const slotData = daySlots[0]; 
                         const slotButton = document.createElement('button');
                         slotButton.classList.add('time-slot-button');
-                        slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
                         
-                        // Stocker les données complètes pour le formulaire
-                        slotButton.dataset.dateDb = slotData.date;
-                        slotButton.dataset.heureDebutDb = slotData.heureDebut;
-                        slotButton.dataset.heureFinDb = slotData.heureFin;
-                        slotButton.dataset.prix = slotData.prix;
-                        slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
+                        // --- NOUVEAU : Logique pour les créneaux passés ---
+                        if (slotData.status === 'past') {
+                            slotButton.classList.add('past-slot'); // Applique le style gris
+                            slotButton.disabled = true; // Rend le bouton non cliquable
+                            slotButton.innerHTML = `Passé<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
+                        } else {
+                            // Créneaux disponibles
+                            slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
+                            slotButton.dataset.dateDb = slotData.date;
+                            slotButton.dataset.heureDebutDb = slotData.heureDebut;
+                            slotButton.dataset.heureFinDb = slotData.heureFin;
+                            slotButton.dataset.prix = slotData.prix;
+                            slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
+                            slotButton.onclick = function() {
+                                selectSlot(medecinId, this);
+                            };
+                        }
+                        // --- FIN NOUVEAU ---
 
-                        slotButton.onclick = function() {
-                            selectSlot(medecinId, this);
-                        };
                         td.appendChild(slotButton);
                     } else {
                         td.innerHTML = ' '; // Laisser vide si pas de créneau

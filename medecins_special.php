@@ -3,6 +3,7 @@
 require 'includes/head.php';
 require 'includes/header.php';
 
+// S'assurer que l'utilisateur est connecté pour prendre RDV
 $user_is_logged_in = isset($_SESSION["user_id"]);
 
 function safe_html($value) {
@@ -261,6 +262,22 @@ $resultMedecins = $conn->query($sqlMedecins);
             background-color: #d4f8e0;
             border-color: #a3e9b9;
         }
+        /* Style pour les créneaux passés (NON CLICABLES) */
+        .time-slot-button.past-slot {
+            background-color: #e9ecef !important; /* Gris très clair */
+            color: #6c757d !important; /* Texte gris foncé */
+            border-color: #ced4da !important; /* Bordure grise */
+            cursor: not-allowed !important; /* Curseur "interdit" */
+            opacity: 0.7; /* Légèrement transparent */
+            text-decoration: line-through; /* Optionnel: barre le texte pour plus de clarté */
+            pointer-events: none; /* Empêche tout événement de souris (clic, survol) */
+            box-shadow: none; /* Pas d'ombre portée */
+        }
+        /* Assurez-vous que le prix dans le créneau passé est aussi grisé */
+        .time-slot-button.past-slot .slot-price {
+            color: #888 !important; /* Une nuance de gris plus foncée pour le prix */
+        }
+        /* Style pour les boutons désactivés en général (si déjà présent ailleurs, ajuster la spécificité) */
         .time-slot-button:disabled { 
              background-color: #ccc;
              cursor: not-allowed;
@@ -383,7 +400,7 @@ $resultMedecins = $conn->query($sqlMedecins);
                         <?php else: ?>
                             <a href="login.php?redirect=medecins_special.php" class="btn-action btn-rdv" style="background-color:#007bff;">Se connecter pour prendre RDV</a>
                         <?php endif; ?>
-                        <a href="communiquer.php?id=<?php echo $idMedecin; ?>" class="btn-action btn-communiquer">Communiquer</a>
+                        <a href="chat.php?target_id=<?php echo $idMedecin; ?>" class="btn-action btn-communiquer">Communiquer</a>
                         <a href="cv_medecin.php?id=<?php echo $idMedecin; ?>" class="btn-action btn-cv">Voir CV</a>
                     </div>
                 </form>
@@ -404,7 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- GESTION DU FILTRE DE SPÉCIALITÉS ---
     const filterCheckboxesContainer = document.getElementById('specialty-filter-options-container');
     // Cibler les cartes directement sous .main-specialistes, car on a enlevé le conteneur intermédiaire.
-    // Ou, si tu veux être plus précis, les cartes qui ne sont pas le bloc de filtre lui-même.
     const allDoctorCards = Array.from(document.querySelectorAll('.main-specialistes > .doctor-card'));
 
 
@@ -442,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // --- GESTION DU CALENDRIER (Code inchangé par rapport à la version précédente) ---
+    // --- GESTION DU CALENDRIER (Code mis à jour) ---
     const daysOfWeekHeaders = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
     function getWeekDates(date) {
@@ -505,7 +521,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     heureFin: dispo.HeureFin,
                     prix: dispo.Prix,
                     idServiceLabo: dispo.IdServiceLabo,
-                    date: dispo.Date
+                    date: dispo.Date,
+                    status: dispo.status // NOUVEAU : Récupérer le statut
                 });
             }
         });
@@ -519,6 +536,8 @@ document.addEventListener('DOMContentLoaded', function() {
             td.textContent = "Aucun créneau disponible pour cette semaine.";
             td.style.textAlign = "center";
             td.style.padding = "10px";
+            td.style.fontStyle = "italic";
+            td.style.color = "#6c757d";
         } else {
             sortedTimes.forEach(heureDebutAffichage => {
                 const tr = calendarBody.insertRow();
@@ -532,17 +551,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         const slotData = daySlots[0]; 
                         const slotButton = document.createElement('button');
                         slotButton.classList.add('time-slot-button');
-                        slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
                         
-                        slotButton.dataset.dateDb = slotData.date;
-                        slotButton.dataset.heureDebutDb = slotData.heureDebut;
-                        slotButton.dataset.heureFinDb = slotData.heureFin;
-                        slotButton.dataset.prix = slotData.prix;
-                        slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
-
-                        slotButton.onclick = function() {
-                            selectSlot(medecinId, this);
-                        };
+                        // --- NOUVEAU : Logique pour les créneaux passés ---
+                        if (slotData.status === 'past') {
+                            slotButton.classList.add('past-slot'); // Applique le style gris
+                            slotButton.disabled = true; // Rend le bouton non cliquable
+                            slotButton.innerHTML = `Passé<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
+                        } else {
+                            // Créneaux disponibles
+                            slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
+                            slotButton.dataset.dateDb = slotData.date;
+                            slotButton.dataset.heureDebutDb = slotData.heureDebut;
+                            slotButton.dataset.heureFinDb = slotData.heureFin;
+                            slotButton.dataset.prix = slotData.prix;
+                            slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
+                            slotButton.onclick = function() {
+                                selectSlot(medecinId, this);
+                            };
+                        }
+                        // --- FIN NOUVEAU ---
+                        
                         td.appendChild(slotButton);
                     } else {
                         td.innerHTML = ' ';

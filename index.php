@@ -16,7 +16,7 @@
             <p>Votre santé est notre priorité. Prenez rendez-vous dès maintenant avec l’un de nos spécialistes.</p>
             <div class="hero-buttons">
                 <a href="register.php">Prendre RDV</a>
-                <a href="planning.php">Voir Emploi du Temps</a>
+                <a href="parcourir.php">Voir Emploi du Temps</a>
             </div>
         </div>
     </section>
@@ -32,7 +32,7 @@
         <div class="info-card">
             <h3>Emploi du temps</h3>
             <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p>
-            <a href="planning.php">Voir les horaires</a>
+            <a href="parcourir.php">Voir les horaires</a>
         </div>
     </section>
 

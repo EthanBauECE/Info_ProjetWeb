@@ -4,4 +4,5 @@
     <title>Medicare</title>
     <link rel="icon" type="image/png" href="./images/medicare_logo.png" />
     <link rel="stylesheet" href="./css/style.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>

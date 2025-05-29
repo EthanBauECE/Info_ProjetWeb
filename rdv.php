@@ -7,26 +7,52 @@ function safe_html($value) {
     return $value !== null ? htmlspecialchars($value) : '';
 }
 
-// Redirection si non connecté
+// Redirection vers login.php si non connecté
 if (!isset($_SESSION["user_id"])) {
-    header("Location: #");
+    header("Location: login.php");
     exit();
 }
 
 $user_id = $_SESSION["user_id"];
+$is_personnel = false;
+$user_type = 'client';
+
+// Détermination du type d'utilisateur
+$conn = new mysqli("localhost", "root", "", "base_donne_web");
+if ($conn->connect_error) die("Connexion échouée: " . $conn->connect_error);
+$conn->set_charset("utf8");
+
+// Vérification si l'utilisateur est du personnel
+$sql_check = "SELECT ID FROM utilisateurs_personnel WHERE ID = ?";
+$stmt_check = $conn->prepare($sql_check);
+$stmt_check->bind_param("i", $user_id);
+$stmt_check->execute();
+$result_check = $stmt_check->get_result();
+
+if ($result_check->num_rows > 0) {
+    $is_personnel = true;
+    $user_type = 'personnel';
+}
+$stmt_check->close();
 
 // Traitement de l'annulation du rendez-vous
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_rdv'])) {
     $rdv_id = $_POST['id_rdv'];
     
-    $conn = new mysqli("localhost", "root", "", "base_donne_web");
-    if ($conn->connect_error) die("Connexion échouée: " . $conn->connect_error);
-    $conn->set_charset("utf8");
-
-    // Récupération des infos du RDV
-    $sql = "SELECT ID_Personnel, HeureDebut, HeureFin, ID_ServiceLabo FROM rdv WHERE ID = ? AND ID_Client = ?";
+    // Construction de la requête selon le type d'utilisateur
+    if ($is_personnel) {
+        $sql = "SELECT ID_Personnel, HeureDebut, HeureFin, ID_ServiceLabo 
+                FROM rdv 
+                WHERE ID = ? AND ID_Personnel = ?";
+    } else {
+        $sql = "SELECT ID_Personnel, HeureDebut, HeureFin, ID_ServiceLabo 
+                FROM rdv 
+                WHERE ID = ? AND ID_Client = ?";
+    }
+    
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $rdv_id, $user_id);
+    $user_id_param = $user_id;
+    $stmt->bind_param("ii", $rdv_id, $user_id_param);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -45,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_rdv'])) {
     $conn->begin_transaction();
 
     try {
-        // 1. Copie dans la table dispo
+        // Copie dans la table dispo
         $insert_sql = "INSERT INTO dispo (IDPersonnel, Date, HeureDebut, HeureFin, IdServiceLabo) 
                        VALUES (?, ?, ?, ?, ?)";
         $insert_stmt = $conn->prepare($insert_sql);
@@ -58,37 +84,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_rdv'])) {
         );
         $insert_stmt->execute();
         
-        // 2. Suppression du RDV
-        $delete_sql = "DELETE FROM rdv WHERE ID = ?";
-        $delete_stmt = $conn->prepare($delete_sql);
-        $delete_stmt->bind_param("i", $rdv_id);
-        $delete_stmt->execute();
+        // Mise à jour du statut au lieu de suppression
+        $update_sql = "UPDATE rdv SET Statut = 'Annulé' WHERE ID = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("i", $rdv_id);
+        $update_stmt->execute();
         
         $conn->commit();
-        $success_message = "Rendez-vous annulé avec succès! La plage horaire est de nouveau disponible.";
+        $success_message = "Rendez-vous annulé avec succès!";
     } catch (Exception $e) {
         $conn->rollback();
         $error_message = "Erreur lors de l'annulation: " . $e->getMessage();
     } finally {
         $stmt->close();
-        if (isset($delete_stmt)) $delete_stmt->close();
+        if (isset($update_stmt)) $update_stmt->close();
         if (isset($insert_stmt)) $insert_stmt->close();
-        $conn->close();
     }
 }
-
-// Connexion pour l'affichage des rendez-vous
-$conn = new mysqli("localhost", "root", "", "base_donne_web");
-if ($conn->connect_error) {
-    die("Erreur de connexion: " . $conn->connect_error);
-}
-$conn->set_charset("utf8");
 ?>
 
 <!DOCTYPE html>
 <?php require 'includes/head.php'; ?>
-
-
 
 <body>
 <?php require 'includes/header.php'; ?>
@@ -110,18 +126,33 @@ $conn->set_charset("utf8");
             echo '<div class="alert error">' . safe_html($error_message) . '</div>';
         }
 
-        date_default_timezone_set('Europe/Paris');
-
-        $sql = "
-            SELECT rdv.ID, rdv.HeureDebut, rdv.HeureFin, rdv.Statut, rdv.ID_Personnel, rdv.ID_ServiceLabo,
-                   utilisateurs.Nom AS nom_medecin,
-                   utilisateurs_personnel.Photo AS photo_medecin
-            FROM rdv
-            JOIN utilisateurs_personnel ON rdv.ID_Personnel = utilisateurs_personnel.ID
-            JOIN utilisateurs ON utilisateurs_personnel.ID = utilisateurs.ID
-            WHERE rdv.ID_Client = ?
-            ORDER BY rdv.HeureDebut ASC
-        ";
+        // Construction de la requête selon le type d'utilisateur
+        if ($is_personnel) {
+            $sql = "
+                SELECT rdv.ID, rdv.HeureDebut, rdv.HeureFin, rdv.Statut, rdv.ID_Client,
+                       utilisateurs.Nom AS nom_client,
+                       utilisateurs.Prenom AS prenom_client
+                FROM rdv
+                JOIN utilisateurs_client ON rdv.ID_Client = utilisateurs_client.ID
+                JOIN utilisateurs ON utilisateurs_client.ID = utilisateurs.ID
+                WHERE rdv.ID_Personnel = ?
+                ORDER BY rdv.HeureDebut ASC
+            ";
+            $title = " (Personnel)";
+        } else {
+            $sql = "
+                SELECT rdv.ID, rdv.HeureDebut, rdv.HeureFin, rdv.Statut, rdv.ID_Personnel,
+                       utilisateurs.Nom AS nom_medecin,
+                       utilisateurs.Prenom AS prenom_medecin,
+                       utilisateurs_personnel.Photo AS photo_medecin
+                FROM rdv
+                JOIN utilisateurs_personnel ON rdv.ID_Personnel = utilisateurs_personnel.ID
+                JOIN utilisateurs ON utilisateurs_personnel.ID = utilisateurs.ID
+                WHERE rdv.ID_Client = ?
+                ORDER BY rdv.HeureDebut ASC
+            ";
+            $title = " (Client)";
+        }
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -140,20 +171,50 @@ $conn->set_charset("utf8");
             $datetime_rdv = strtotime($rdv['HeureDebut']);
             $now = time();
             $is_past = $datetime_rdv < $now;
+            $is_cancelled = ($rdv['Statut'] === 'Annulé');
 
-            echo '<div class="rdv-box ' . ($is_past ? 'rdv-past' : '') . '">';
-            echo   '<div class="rdv-photo">';
-            echo     '<img src="' . safe_html($rdv['photo_medecin']) . '" alt="Photo du médecin">';
-            echo   '</div>';
+            // Classes CSS conditionnelles
+            $box_class = 'rdv-box';
+            if ($is_cancelled) {
+                $box_class .= ' rdv-cancelled';
+            } elseif ($is_past) {
+                $box_class .= ' rdv-past';
+            }
+
+            echo '<div class="' . $box_class . '">';
+            
+            // Affichage de la photo uniquement pour les clients
+            if (!$is_personnel) {
+                echo   '<div class="rdv-photo">';
+                echo     '<img src="' . safe_html($rdv['photo_medecin']) . '" alt="Photo du médecin">';
+                echo   '</div>';
+            } else {
+                // Espace vide pour maintenir la mise en page
+                echo   '<div class="rdv-photo">';
+                echo     '&nbsp;';
+                echo   '</div>';
+            }
+            
             echo   '<div class="rdv-details">';
-            echo     '<h3>Dr. ' . safe_html($rdv['nom_medecin']) . '</h3>';
+            
+            // Affichage du nom selon le type d'utilisateur
+            if ($is_personnel) {
+                echo     '<h3>Client: ' . safe_html($rdv['prenom_client']) . ' ' . safe_html($rdv['nom_client']) . '</h3>';
+            } else {
+                echo     '<h3>Dr. ' . safe_html($rdv['prenom_medecin']) . ' ' . safe_html($rdv['nom_medecin']) . '</h3>';
+            }
+            
             echo     '<p><strong>Début :</strong> ' . date('d/m/Y H:i', strtotime($rdv['HeureDebut'])) . '</p>';
             echo     '<p><strong>Fin :</strong> ' . date('H:i', strtotime($rdv['HeureFin'])) . '</p>';
             echo     '<p><strong>Statut :</strong> ' . safe_html($rdv['Statut']) . '</p>';
 
-            if ($is_past) {
+            // Affichage conditionnel des états
+            if ($is_cancelled) {
+                echo '<div class="cancelled-label">Annulé</div>';
+            } elseif ($is_past) {
                 echo '<div class="past-label">Passé</div>';
             } else {
+                // Bouton d'annulation uniquement pour les RDV futurs non annulés
                 echo '<form method="POST" action="">';
                 echo   '<input type="hidden" name="id_rdv" value="' . safe_html($rdv['ID']) . '">';
                 echo   '<button type="submit" class="btn-annuler">Annuler le RDV</button>';

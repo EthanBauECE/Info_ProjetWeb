@@ -5,79 +5,65 @@ $dbname = 'base_donne_web';
 $user = 'root';
 $pass = '';
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->beginTransaction(); // Start a transaction for atomicity
-} catch (PDOException $e) {
-    die("Erreur BDD : " . $e->getMessage());
+$conn = mysqli_connect($host, $user, $pass, $dbname);
+
+if (!$conn) {
+    die("Connexion échouée : " . mysqli_connect_error());
 }
 
 // Données du formulaire
-$nom = $_POST['nom'];
-$prenom = $_POST['prenom'];
-$email = $_POST['email'];
-$password = $_POST['password']; // ❗ Pas de hashage ici
-$typeCompte = 'client';
-$telephone = $_POST['telephone'];
-$carteVitale = $_POST['carte_vitale'];
+$nom = trim($_POST['nom']);
+$prenom = trim($_POST['prenom']);
+$email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+$password = $_POST['password']; // ❗ Mot de passe non hashé
+$telephone = trim($_POST['telephone']);
+$carteVitale = trim($_POST['carte_vitale']);
+$adresse_rue = trim($_POST['adresse_rue']);
+$ville = trim($_POST['ville']);
+$code_postal = trim($_POST['code_postal']);
+$infos_complementaires = trim($_POST['infos_complementaires']);
 
-// New address fields from the modified form
-$adresse_rue = $_POST['adresse_rue'];
-$ville = $_POST['ville'];
-$code_postal = $_POST['code_postal'];
-$infos_complementaires = $_POST['infos_complementaires'];
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    header("Location: register.php?inscription=error&message=" . urlencode("Email invalide."));
+    exit();
+}
+
+// Démarrer la transaction
+mysqli_begin_transaction($conn);
 
 try {
-    // Étape 1 : Insérer l'adresse dans la table `adresse`
-    $sql_adresse = "INSERT INTO adresse (Adresse, Ville, CodePostal, InfosComplementaires)
-                    VALUES (:adresse, :ville, :code_postal, :infos_complementaires)";
-    $stmt_adresse = $pdo->prepare($sql_adresse);
-    $stmt_adresse->execute([
-        ':adresse' => $adresse_rue,
-        ':ville' => $ville,
-        ':code_postal' => $code_postal,
-        ':infos_complementaires' => $infos_complementaires
-    ]);
-    $adresse_id_inserted = $pdo->lastInsertId(); // Get the ID of the newly inserted address
+    // Étape 1 : Insérer l'adresse
+    $stmt1 = mysqli_prepare($conn, "INSERT INTO adresse (Adresse, Ville, CodePostal, InfosComplementaires) VALUES (?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt1, "ssss", $adresse_rue, $ville, $code_postal, $infos_complementaires);
+    mysqli_stmt_execute($stmt1);
+    $adresse_id = mysqli_insert_id($conn);
+    mysqli_stmt_close($stmt1);
 
-    // Étape 2 : Insérer l'utilisateur dans la table `utilisateurs`
-    $sql_user = "INSERT INTO utilisateurs (Nom, Prenom, Email, MotDePasse, TypeCompte)
-                 VALUES (:nom, :prenom, :email, :mot_de_passe, :type_compte)";
-    $stmt_user = $pdo->prepare($sql_user);
-    $stmt_user->execute([
-        ':nom' => $nom,
-        ':prenom' => $prenom,
-        ':email' => $email,
-        ':mot_de_passe' => $password,
-        ':type_compte' => $typeCompte
-    ]);
-    $utilisateur_id = $pdo->lastInsertId(); // Get the ID of the newly inserted user
+    // Étape 2 : Insérer l'utilisateur
+    $typeCompte = 'client';
+    $stmt2 = mysqli_prepare($conn, "INSERT INTO utilisateurs (Nom, Prenom, Email, MotDePasse, TypeCompte) VALUES (?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt2, "sssss", $nom, $prenom, $email, $password, $typeCompte);
+    mysqli_stmt_execute($stmt2);
+    $utilisateur_id = mysqli_insert_id($conn);
+    mysqli_stmt_close($stmt2);
 
-    // Étape 3 : Insérer les détails du client dans la table `utilisateurs_client`
-    // IMPORTANT: Based on existing code (profil.php, modifier_profil.php) that joins `utilisateurs`
-    // and `utilisateurs_client` on `u.ID = uc.ID`, the `ID` column in `utilisateurs_client`
-    // is expected to match `utilisateurs.ID` despite being AUTO_INCREMENT in the schema.
-    // MySQL allows explicit insertion into an AUTO_INCREMENT column.
-    $sql_client = "INSERT INTO utilisateurs_client (ID, Telephone, CarteVitale, ID_Adresse)
-                   VALUES (:id_utilisateur, :telephone, :carte_vitale, :id_adresse)";
-    $stmt_client = $pdo->prepare($sql_client);
-    $stmt_client->execute([
-        ':id_utilisateur' => $utilisateur_id, // Link the client's specific details to their main user ID
-        ':telephone' => $telephone,
-        ':carte_vitale' => $carteVitale,
-        ':id_adresse' => $adresse_id_inserted // Link to the newly inserted address ID
-    ]);
+    // Étape 3 : Insérer les détails client
+    $stmt3 = mysqli_prepare($conn, "INSERT INTO utilisateurs_client (ID, Telephone, CarteVitale, ID_Adresse) VALUES (?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt3, "issi", $utilisateur_id, $telephone, $carteVitale, $adresse_id);
+    mysqli_stmt_execute($stmt3);
+    mysqli_stmt_close($stmt3);
 
-    $pdo->commit(); // Commit the transaction
+    mysqli_commit($conn);
+    mysqli_close($conn);
+
     header("Location: login.php?inscription=success");
     exit();
 
-} catch (PDOException $e) {
-    $pdo->rollBack(); // Rollback on error
-    // Log the error for debugging purposes (e.g., to a file or system log)
-    error_log("Inscription failed: " . $e->getMessage());
-    // Redirect with an error message, perhaps back to the registration form
-    header("Location: register.php?inscription=error&message=" . urlencode("Erreur lors de l'inscription. Veuillez réessayer."));
+} catch (Exception $e) {
+    mysqli_rollback($conn);
+    mysqli_close($conn);
+    error_log("Erreur inscription : " . $e->getMessage());
+    header("Location: register.php?inscription=error&message=" . urlencode("Erreur lors de l'inscription."));
     exit();
 }
+?>

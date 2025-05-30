@@ -11,85 +11,143 @@ if (isset($_SESSION["user_type"]) && $_SESSION["user_type"] === "admin") {
     exit();
 }
 
-try {
-    $pdo = new PDO("mysql:host=localhost;dbname=base_donne_web;charset=utf8", "root", "");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Erreur de connexion BDD : " . $e->getMessage());
+// --- DÉBUT DE LA PARTIE AVEC MySQLi en mode procédural ---
+
+$db_host = "localhost";
+$db_user = "root";
+$db_pass = ""; // Votre mot de passe root, si vous en avez un
+$db_name = "base_donne_web";
+
+// 1. Connexion à la base de données
+$conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+
+// Vérifier la connexion
+if (!$conn) {
+    // Ne jamais afficher mysqli_connect_error() directement en production.
+    // Loggez l'erreur et affichez un message générique.
+    error_log("Erreur de connexion BDD (mysqli_connect): " . mysqli_connect_error() . " (Code: " . mysqli_connect_errno() . ")");
+    die("Erreur de connexion à la base de données. Veuillez réessayer plus tard.");
+}
+
+// 2. Définir le charset (très important)
+if (!mysqli_set_charset($conn, "utf8")) {
+    error_log("Erreur lors du chargement du jeu de caractères utf8 (mysqli_set_charset): " . mysqli_error($conn));
+    mysqli_close($conn);
+    die("Erreur de configuration de la base de données.");
 }
 
 $user_id = $_SESSION["user_id"];
+// 3. ÉCHAPPEMENT OBLIGATOIRE pour éviter les injections SQL
+//    Puisque $user_id vient de la session et est un entier, un cast (int) est plus sûr.
+$user_id_safe = (int) $user_id;
 
-$sql = "SELECT ID, Nom, Prenom, Email, TypeCompte FROM utilisateurs WHERE ID = ?";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$user_id]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$sql = "SELECT ID, Nom, Prenom, Email, TypeCompte FROM utilisateurs WHERE ID = $user_id_safe";
+$result_user = mysqli_query($conn, $sql);
+
+if (!$result_user) {
+    error_log("Erreur requête utilisateur (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql);
+    mysqli_close($conn);
+    die("Une erreur s'est produite lors de la récupération de vos informations.");
+}
+
+$user = mysqli_fetch_assoc($result_user);
+mysqli_free_result($result_user);
 
 if (!$user) {
     session_destroy();
+    mysqli_close($conn);
     header("Location: login.php");
     exit();
 }
 
 $type = $user["TypeCompte"];
-$detailed_info = []; // Will hold all specific info including address
+$detailed_info = [];
 $stats = [];
 
-// Fetch detailed information based on account type
 if ($type === "client") {
-    // Corrected WHERE clause: uc.ID instead of uc.ID_Utilisateur
-    // Removed a.Pays as it's not in the adresse table
-    $stmt_client = $pdo->prepare("
+    $sql_client = "
         SELECT uc.Telephone, uc.CarteVitale,
                a.Adresse AS AdresseLigne, a.Ville, a.CodePostal, a.InfosComplementaires
         FROM utilisateurs_client uc
         LEFT JOIN adresse a ON uc.ID_Adresse = a.ID
-        WHERE uc.ID = ?
-    ");
-    $stmt_client->execute([$user_id]);
-    $detailed_info = $stmt_client->fetch(PDO::FETCH_ASSOC) ?: [];
+        WHERE uc.ID = $user_id_safe
+    ";
+    $result_client = mysqli_query($conn, $sql_client);
+    if ($result_client) {
+        $detailed_info = mysqli_fetch_assoc($result_client) ?: [];
+        mysqli_free_result($result_client);
+    } else {
+        error_log("Erreur requête client détails (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql_client);
+    }
 
     // Client stats
-    $stmt_rdv_past = $pdo->prepare("SELECT COUNT(*) FROM rdv WHERE ID_Client = ? AND CONCAT(DateRDV, ' ', HeureFin) < NOW()");
-    $stmt_rdv_past->execute([$user_id]);
-    $stats['rdv_past_count'] = $stmt_rdv_past->fetchColumn();
+    $sql_rdv_past = "SELECT COUNT(*) as count FROM rdv WHERE ID_Client = $user_id_safe AND CONCAT(DateRDV, ' ', HeureFin) < NOW()";
+    $result_rdv_past = mysqli_query($conn, $sql_rdv_past);
+    if ($result_rdv_past) {
+        $row_rdv_past = mysqli_fetch_assoc($result_rdv_past);
+        $stats['rdv_past_count'] = $row_rdv_past['count'] ?? 0;
+        mysqli_free_result($result_rdv_past);
+    } else {
+        error_log("Erreur requête rdv_past_count (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql_rdv_past);
+        $stats['rdv_past_count'] = 0;
+    }
 
-    $stmt_rdv_upcoming = $pdo->prepare("SELECT COUNT(*) FROM rdv WHERE ID_Client = ? AND CONCAT(DateRDV, ' ', HeureDebut) >= NOW()");
-    $stmt_rdv_upcoming->execute([$user_id]);
-    $stats['rdv_upcoming_count'] = $stmt_rdv_upcoming->fetchColumn();
+    $sql_rdv_upcoming = "SELECT COUNT(*) as count FROM rdv WHERE ID_Client = $user_id_safe AND CONCAT(DateRDV, ' ', HeureDebut) >= NOW()";
+    $result_rdv_upcoming = mysqli_query($conn, $sql_rdv_upcoming);
+     if ($result_rdv_upcoming) {
+        $row_rdv_upcoming = mysqli_fetch_assoc($result_rdv_upcoming);
+        $stats['rdv_upcoming_count'] = $row_rdv_upcoming['count'] ?? 0;
+        mysqli_free_result($result_rdv_upcoming);
+    } else {
+        error_log("Erreur requête rdv_upcoming_count (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql_rdv_upcoming);
+        $stats['rdv_upcoming_count'] = 0;
+    }
 
-} elseif ($type === "Personnel") { // Note: 'Personnel' capitalized as in the DB
-    // Corrected WHERE clause: up.ID instead of up.ID_Utilisateur
-    // Removed a.Pays as it's not in the adresse table
-    // Joined with 'cv' table to get CV content and renamed it to CV_Content for clarity
-    $stmt_personnel = $pdo->prepare("
+} elseif ($type === "Personnel") {
+    $sql_personnel = "
         SELECT up.Telephone, up.Description, up.Type AS Specialite, up.Photo, up.Video, cv.ContenuXML AS CV_Content,
                a.Adresse AS AdresseLigne, a.Ville, a.CodePostal, a.InfosComplementaires
         FROM utilisateurs_personnel up
         LEFT JOIN adresse a ON up.ID_Adresse = a.ID
         LEFT JOIN cv ON up.ID = cv.ID_Personnel
-        WHERE up.ID = ?
-    ");
-    $stmt_personnel->execute([$user_id]);
-    $detailed_info = $stmt_personnel->fetch(PDO::FETCH_ASSOC) ?: [];
+        WHERE up.ID = $user_id_safe
+    ";
+    $result_personnel = mysqli_query($conn, $sql_personnel);
+    if ($result_personnel) {
+        $detailed_info = mysqli_fetch_assoc($result_personnel) ?: [];
+        mysqli_free_result($result_personnel);
+    } else {
+         error_log("Erreur requête personnel détails (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql_personnel);
+    }
 
     // Personnel stats
-    $stmt_rdv_personnel_upcoming = $pdo->prepare("SELECT COUNT(*) FROM rdv WHERE ID_Personnel = ? AND CONCAT(DateRDV, ' ', HeureDebut) >= NOW()");
-    $stmt_rdv_personnel_upcoming->execute([$user_id]);
-    $stats['personnel_rdv_upcoming_count'] = $stmt_rdv_personnel_upcoming->fetchColumn();
+    $sql_rdv_pers_up = "SELECT COUNT(*) as count FROM rdv WHERE ID_Personnel = $user_id_safe AND CONCAT(DateRDV, ' ', HeureDebut) >= NOW()";
+    $result_rdv_pers_up = mysqli_query($conn, $sql_rdv_pers_up);
+    if ($result_rdv_pers_up) {
+        $row_rdv_pers_up = mysqli_fetch_assoc($result_rdv_pers_up);
+        $stats['personnel_rdv_upcoming_count'] = $row_rdv_pers_up['count'] ?? 0;
+        mysqli_free_result($result_rdv_pers_up);
+    } else {
+        error_log("Erreur requête personnel_rdv_upcoming_count (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql_rdv_pers_up);
+        $stats['personnel_rdv_upcoming_count'] = 0;
+    }
 
-    $stmt_dispo_personnel_upcoming = $pdo->prepare("SELECT COUNT(*) FROM dispo WHERE IdPersonnel = ? AND CONCAT(Date, ' ', HeureDebut) >= NOW()");
-    $stmt_dispo_personnel_upcoming->execute([$user_id]);
-    $stats['personnel_dispo_upcoming_count'] = $stmt_dispo_personnel_upcoming->fetchColumn();
-
-} elseif ($type === "admin") {
-    // Admin stats
-    $stats['total_users'] = $pdo->query("SELECT COUNT(*) FROM utilisateurs")->fetchColumn();
-    $stats['total_rdv'] = $pdo->query("SELECT COUNT(*) FROM rdv")->fetchColumn();
-    $stats['upcoming_rdv_site'] = $pdo->query("SELECT COUNT(*) FROM rdv WHERE CONCAT(DateRDV, ' ', HeureDebut) >= NOW()")->fetchColumn();
-    $stats['total_laboratoires'] = $pdo->query("SELECT COUNT(*) FROM laboratoire")->fetchColumn();
-    $stats['total_services_labo'] = $pdo->query("SELECT COUNT(*) FROM service_labo")->fetchColumn();
+    $sql_dispo_pers_up = "SELECT COUNT(*) as count FROM dispo WHERE IdPersonnel = $user_id_safe AND CONCAT(Date, ' ', HeureDebut) >= NOW()";
+    $result_dispo_pers_up = mysqli_query($conn, $sql_dispo_pers_up);
+    if ($result_dispo_pers_up) {
+        $row_dispo_pers_up = mysqli_fetch_assoc($result_dispo_pers_up);
+        $stats['personnel_dispo_upcoming_count'] = $row_dispo_pers_up['count'] ?? 0;
+        mysqli_free_result($result_dispo_pers_up);
+    } else {
+        error_log("Erreur requête personnel_dispo_upcoming_count (mysqli_query): " . mysqli_error($conn) . " SQL: " . $sql_dispo_pers_up);
+        $stats['personnel_dispo_upcoming_count'] = 0;
+    }
 }
+// Le bloc admin est omis car la redirection initiale l'empêche d'être atteint.
+// Et si on l'atteignait, il faudrait aussi échapper les variables ou utiliser des requêtes préparées.
+
+// --- FIN DE LA PARTIE AVEC MySQLi en mode procédural ---
 
 $success_message = isset($_SESSION['profile_success']) ? $_SESSION['profile_success'] : '';
 $error_message = isset($_SESSION['profile_error']) ? $_SESSION['profile_error'] : '';
@@ -116,7 +174,6 @@ function safe_html($value) {
             </div>
         </div>
 
-
         <?php if (!empty($success_message)): ?>
             <div class="profile-alert success"><?= safe_html($success_message) ?></div>
         <?php endif; ?>
@@ -127,25 +184,13 @@ function safe_html($value) {
         <section class="profile-section">
             <h3 class="section-title">Informations Générales du Compte</h3>
             <div class="profile-details-grid">
-                <p class="profile-detail-item"><strong>Nom :</strong> <?= safe_html($user["Nom"]) ?></p>
-                <p class="profile-detail-item"><strong>Prénom :</strong> <?= safe_html($user["Prenom"]) ?></p>
-                <p class="profile-detail-item full-width"><strong>Email :</strong> <?= safe_html($user["Email"]) ?></p>
+                <p class="profile-detail-item"><strong>Nom :</strong> <?= safe_html($user["Nom"] ?? '') ?></p>
+                <p class="profile-detail-item"><strong>Prénom :</strong> <?= safe_html($user["Prenom"] ?? '') ?></p>
+                <p class="profile-detail-item full-width"><strong>Email :</strong> <?= safe_html($user["Email"] ?? '') ?></p>
             </div>
         </section>
 
-        <?php if ($type === "admin"): ?>
-            <section class="profile-section">
-                <h3 class="section-title">Résumé Administratif</h3>
-                 <div class="profile-details-grid">
-                    <p class="profile-detail-item"><strong>Comptes sur le site :</strong> <?= safe_html($stats['total_users'] ?? '0') ?></p>
-                    <p class="profile-detail-item"><strong>Total RDV enregistrés :</strong> <?= safe_html($stats['total_rdv'] ?? '0') ?></p>
-                    <p class="profile-detail-item"><strong>Laboratoires partenaires :</strong> <?= safe_html($stats['total_laboratoires'] ?? '0') ?></p>
-                    <p class="profile-detail-item"><strong>Services proposés :</strong> <?= safe_html($stats['total_services_labo'] ?? '0') ?></p>
-                    <p class="profile-detail-item full-width"><strong>RDV à venir (site) :</strong> <?= safe_html($stats['upcoming_rdv_site'] ?? '0') ?></p>
-                </div>
-            </section>
-
-        <?php elseif ($type === "Personnel") : ?>
+        <?php if ($type === "Personnel") : ?>
             <section class="profile-section">
                 <h3 class="section-title">Détails Professionnels</h3>
                 <?php if (!empty($detailed_info["Photo"])): ?>
@@ -166,7 +211,6 @@ function safe_html($value) {
                             <span class="address-block">
                                 <?= safe_html($detailed_info["AdresseLigne"]) ?><br>
                                 <?= safe_html($detailed_info["CodePostal"] ?? '') ?> <?= safe_html($detailed_info["Ville"] ?? '') ?>
-                                <?php // Removed Pays from here as it's not in the DB schema ?>
                                 <?php if (!empty($detailed_info["InfosComplementaires"])): ?>
                                     <br><em class="address-complement"><?= safe_html($detailed_info["InfosComplementaires"]) ?></em>
                                 <?php endif; ?>
@@ -181,7 +225,7 @@ function safe_html($value) {
                             <a href="uploads/<?= safe_html($detailed_info["Video"]) ?>" target="_blank" class="video-link">Voir la vidéo</a>
                         </p>
                     <?php endif; ?>
-                     <?php if (!empty($detailed_info["CV_Content"])): // Changed from CV to CV_Content ?>
+                     <?php if (!empty($detailed_info["CV_Content"])): ?>
                         <p class="profile-detail-item"><strong>CV :</strong>
                             CV Disponible
                         </p>
@@ -209,7 +253,6 @@ function safe_html($value) {
                              <span class="address-block">
                                 <?= safe_html($detailed_info["AdresseLigne"]) ?><br>
                                 <?= safe_html($detailed_info["CodePostal"] ?? '') ?> <?= safe_html($detailed_info["Ville"] ?? '') ?>
-                                <?php // Removed Pays from here as it's not in the DB schema ?>
                                 <?php if (!empty($detailed_info["InfosComplementaires"])): ?>
                                     <br><em class="address-complement"><?= safe_html($detailed_info["InfosComplementaires"]) ?></em>
                                 <?php endif; ?>
@@ -239,7 +282,7 @@ function safe_html($value) {
 <?php require 'includes/footer.php'; ?>
 
 <style>
-/* Re-using and adapting your existing styles for profil.php */
+/* ... Vos styles CSS restent inchangés ... */
 .profile-main {
     padding: 2rem;
     background-color: #f2f2f2;
@@ -443,7 +486,12 @@ function safe_html($value) {
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
-
 </style>
 </body>
 </html>
+<?php
+// 4. Fermer la connexion
+if (isset($conn) && $conn) {
+    mysqli_close($conn);
+}
+?>

@@ -182,7 +182,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
 
     $message_text = trim($_POST['message_text'] ?? '');
     $conv_id = intval($_POST['conv_id'] ?? 0);
-
     if (empty($message_text) || $conv_id === 0) {
         echo json_encode(['success' => false, 'error' => 'Message vide ou conversation invalide.']);
         exit();

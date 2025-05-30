@@ -1,23 +1,41 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-$user_is_logged_in = isset($_SESSION["user_id"]);
+<?php /////////////////////////////////////////////// PHP //////////////////////////////////////////
 
-try {
-    $pdo = new PDO('mysql:host=localhost;dbname=base_donne_web;charset=utf8', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("ERREUR : Impossible de se connecter à la base de données. " . $e->getMessage());
-}
+    // ______________/ Initialisation Session et Statut Connexion \_____________________
 
-function safe_html($value) {
-    return $value !== null ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
-}
+    /// NOUVEAU UTILISATEUR (Vérification et démarrage session si besoin)
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
-// Récupérer les informations des laboratoires et leurs adresses
-try {
-    $stmtLabos = $pdo->query("
+    /// Vérification si l'utilisateur est connecté
+    $user_is_logged_in = isset($_SESSION["user_id"]);
+
+
+    // ______________/ Connexion Base de Données \_____________________
+    $db_host = 'localhost';
+    $db_user = 'root';
+    $db_pass = '';
+    $db_name = 'base_donne_web';
+    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+
+    /// Vérification de la connexion MySQLi
+    if (!$conn) {
+        die("ERREUR : Impossible de se connecter à la base de données. " . mysqli_connect_error());
+    }
+    mysqli_set_charset($conn, 'utf8');
+
+
+    // ______________/ Fonctions Utiles \_____________________
+
+    /// Fonction pour sécuriser l'affichage HTML
+    function safe_html($value) {
+        return $value !== null ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
+    }
+
+
+    // ______________/ Récupération des Laboratoires \_____________________
+    $laboratoires = [];
+    $sqlLabos = "
         SELECT 
             l.ID, l.Nom, l.Photos, l.Email, l.Telephone, l.Description AS LaboDescription,
             ad.Adresse AS adresse_ligne, ad.Ville AS adresse_ville, ad.CodePostal AS adresse_code_postal, ad.InfosComplementaires AS adresse_infos_comp
@@ -27,13 +45,22 @@ try {
             adresse ad ON l.ID_Adresse = ad.ID
         ORDER BY 
             l.Nom ASC
-    ");
-    $laboratoires = $stmtLabos->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("ERREUR : Impossible de récupérer la liste des laboratoires. " . $e->getMessage());
-}
+    ";
+
+    $resultLabos = mysqli_query($conn, $sqlLabos);
+
+    if ($resultLabos) {
+        while ($row = mysqli_fetch_assoc($resultLabos)) {
+            $laboratoires[] = $row;
+        }
+        mysqli_free_result($resultLabos);
+    } else {
+        die("ERREUR : Impossible de récupérer la liste des laboratoires. " . mysqli_error($conn));
+    }
+
 ?>
-<!DOCTYPE html>
+
+<!DOCTYPE html> <!-- ////////////////////////////////////////// HTML ///////////////////////////////////////////-->
 <html lang="fr">
 <head>
     <meta charset="UTF-8" />
@@ -207,105 +234,133 @@ try {
     </style>
 </head>
 <body>
+    <!-- Importation header -->
     <?php require 'includes/header.php'; ?>
 
     <main class="main-content-page">
         <h1>Laboratoires</h1>
         <div class="labo-bricks-list">
-            <?php if (empty($laboratoires)): ?>
-                <p style="text-align: center; font-size: 1.1em; color: #6c757d;">Aucun laboratoire n'is disponible pour le moment.</p>
-            <?php else: ?>
-            <?php foreach ($laboratoires as $labo): $laboId = safe_html($labo['ID']); ?>
-                <div class="labo-card" id="labo-<?php echo $laboId; ?>">
-                    <div class="labo-header-section">
-                        <div class="labo-photo-display">
-                            <img src="<?php echo safe_html($labo['Photos'] ?: './images/default_labo.jpg'); ?>" alt="Photo de <?php echo safe_html($labo['Nom']); ?>">
-                        </div>
-                        <div class="labo-details-info">
-                            <h3 class="labo-name-title"><?php echo safe_html($labo['Nom']); ?></h3>
-                            <div class="labo-contact-grid">
-                                <?php if (!empty($labo['adresse_ligne'])): ?>
-                                    <p><strong>Adresse :</strong> <?php echo safe_html($labo['adresse_ligne']); ?>, <?php echo safe_html($labo['adresse_code_postal']) . ' ' . safe_html($labo['adresse_ville']); ?>
-                                        <?php if (!empty($labo['adresse_infos_comp'])): ?>
-                                            <br><em style="font-size:0.9em; color: #6c757d;"><?php echo safe_html($labo['adresse_infos_comp']); ?></em>
-                                        <?php endif; ?>
-                                    </p>
-                                <?php endif; ?>
-                                <p><strong>Email :</strong> <a href="mailto:<?php echo safe_html($labo['Email']); ?>"><?php echo safe_html($labo['Email']); ?></a></p>
-                                <p><strong>Téléphone :</strong> <?php echo safe_html($labo['Telephone']); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <?php if(!empty($labo['LaboDescription'])): ?>
-                        <div class="labo-description-display"><?php echo nl2br(safe_html($labo['LaboDescription'])); ?></div>
-                    <?php endif; ?>
-                    
-                    <h4 class="labo-services-section-title">Services disponibles</h4>
-                    <div class="labo-services-list" id="services-list-<?php echo $laboId; ?>">
-                        <?php
-                        $stmtServices = $pdo->prepare("SELECT ID, NomService, Prix FROM service_labo WHERE ID_Laboratoire = ? ORDER BY NomService ASC");
-                        $stmtServices->execute([$labo['ID']]);
-                        $services = $stmtServices->fetchAll(PDO::FETCH_ASSOC);
-                        if (empty($services)) {
-                            echo "<p style='font-size:0.9em; color:#777; width:100%;'>Aucun service spécifique proposé par ce laboratoire.</p>";
-                        } else {
-                            foreach ($services as $service) {
-                                echo '<button type="button" class="service-select-button" data-labo-id="'.$laboId.'" data-service-id="'.safe_html($service['ID']).'" data-service-nom="'.safe_html($service['NomService']).'" data-service-prix="'.safe_html($service['Prix']).'">';
-                                echo safe_html($service['NomService']) . ' <span class="service-price">('.safe_html(number_format($service['Prix'], 2, ',', ' ')).' €)</span>';
-                                echo '</button>';
-                            }
-                        }
-                        ?>
-                    </div>
 
-                    <div class="lab-calendar-container" id="lab-calendar-container-<?php echo $laboId; ?>">
-                        <h5>Disponibilités pour : <strong class="selected-service-name" style="color:#007bff;"></strong></h5>
-                        <div class="calendar-controls">
-                            <button class="prev-week" data-labo-id="<?php echo $laboId; ?>">< Sem. Prec.</button>
-                            <span class="week-display" id="week-display-lab-<?php echo $laboId; ?>"></span>
-                            <button class="next-week" data-labo-id="<?php echo $laboId; ?>">Sem. Suiv. ></button>
-                        </div>
-                        <table class="availability-grid" id="calendar-lab-<?php echo $laboId; ?>">
-                            <thead><tr>
-                                <th style="width: 15%;">Heure</th> <th style="width: 12.14%;">Lun</th> <th style="width: 12.14%;">Mar</th> <th style="width: 12.14%;">Mer</th>
-                                <th style="width: 12.14%;">Jeu</th> <th style="width: 12.14%;">Ven</th> <th style="width: 12.14%;">Sam</th> <th style="width: 12.14%;">Dim</th>
-                            </tr></thead>
-                            <tbody></tbody>
-                        </table>
-                        <form action="confirmation_paiement.php" method="POST" class="lab-rdv-form" id="form-lab-<?php echo $laboId; ?>">
-                            <input type="hidden" name="type_rdv" value="laboratoire"> <!-- Important pour la page de paiement -->
-                            <input type="hidden" name="labo_id" value="<?php echo $laboId; ?>">
-                            <input type="hidden" name="labo_nom" value="<?php echo safe_html($labo['Nom']); ?>">
-                            <input type="hidden" name="selected_service_id" id="selected-service-id-<?php echo $laboId; ?>">
-                            <input type="hidden" name="selected_service_nom" id="selected-service-nom-<?php echo $laboId; ?>">
-                            <input type="hidden" name="selected_date_db" id="selected-date-db-lab-<?php echo $laboId; ?>">
-                            <input type="hidden" name="selected_heure_debut_db" id="selected-heure-debut-db-lab-<?php echo $laboId; ?>">
-                            <input type="hidden" name="selected_heure_fin_db" id="selected-heure-fin-db-lab-<?php echo $laboId; ?>"> <!-- Corrected ID here in HTML -->
-                            <input type="hidden" name="selected_prix" id="selected-prix-lab-<?php echo $laboId; ?>">
-                            <div class="lab-actions-container">
-                                <?php if ($user_is_logged_in): ?>
-                                    <button type="submit" class="btn-action btn-rdv" id="btn-rdv-lab-<?php echo $laboId; ?>" disabled>Choisir un créneau</button>
-                                <?php else: ?>
-                                    <a href="login.php?redirect=laboratoire.php" class="btn-action btn-rdv">Se connecter pour prendre RDV</a>
-                                <?php endif; ?>
+            <?php if (empty($laboratoires)): ?>
+                <p style="text-align: center; font-size: 1.1em; color: #6c757d;">Aucun laboratoire disponible pour le moment.</p>
+            <?php else: ?>
+                <?php foreach ($laboratoires as $labo): ?>
+                    <?php $laboId = safe_html($labo['ID']); ?>
+                    <div class="labo-card" id="labo-<?php echo $laboId; ?>">
+                        <div class="labo-header-section"> <!-- ENTETE DU LABO (PHOTO + INFOS) -->
+                            <div class="labo-photo-display">
+                                <img src="<?php echo safe_html($labo['Photos'] ?: './images/default_labo.jpg'); ?>" alt="Photo de <?php echo safe_html($labo['Nom']); ?>">
                             </div>
-                        </form>
+                            <div class="labo-details-info">
+                                <h3 class="labo-name-title"><?php echo safe_html($labo['Nom']); ?></h3>
+                                <div class="labo-contact-grid">
+                                    <?php if (!empty($labo['adresse_ligne'])): ?>
+                                        <p><strong>Adresse :</strong> <?php echo safe_html($labo['adresse_ligne']); ?>, <?php echo safe_html($labo['adresse_code_postal']) . ' ' . safe_html($labo['adresse_ville']); ?>
+                                            <?php if (!empty($labo['adresse_infos_comp'])): ?>
+                                                <br><em style="font-size:0.9em; color: #6c757d;"><?php echo safe_html($labo['adresse_infos_comp']); ?></em>
+                                            <?php endif; ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <p><strong>Email :</strong> <a href="mailto:<?php echo safe_html($labo['Email']); ?>"><?php echo safe_html($labo['Email']); ?></a></p>
+                                    <p><strong>Téléphone :</strong> <?php echo safe_html($labo['Telephone']); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php if(!empty($labo['LaboDescription'])): ?>
+                            <div class="labo-description-display"><?php echo nl2br(safe_html($labo['LaboDescription'])); ?></div>
+                        <?php endif; ?>
+                        
+                        <h4 class="labo-services-section-title">Services disponibles</h4>
+                        <div class="labo-services-list" id="services-list-<?php echo $laboId; ?>">
+                            <?php // ______________/ Récupération des Services par Laboratoire \_____________________
+                                $sqlServices = "SELECT ID, NomService, Prix FROM service_labo WHERE ID_Laboratoire = ? ORDER BY NomService ASC";
+                                $stmtServices = mysqli_prepare($conn, $sqlServices);
+
+                                if ($stmtServices) {
+                                    mysqli_stmt_bind_param($stmtServices, "i", $labo['ID']);
+                                    mysqli_stmt_execute($stmtServices);
+                                    $resultServices = mysqli_stmt_get_result($stmtServices);
+                                    $services = [];
+                                    while ($service_row = mysqli_fetch_assoc($resultServices)) {
+                                        $services[] = $service_row;
+                                    }
+                                    mysqli_free_result($resultServices);
+                                    mysqli_stmt_close($stmtServices);
+
+                                    if (empty($services)) {
+                                        echo "<p style='font-size:0.9em; color:#777; width:100%;'>Aucun service spécifique proposé par ce laboratoire.</p>";
+                                    } else {
+                                        foreach ($services as $service) {
+                                            echo '<button type="button" class="service-select-button" data-labo-id="'.$laboId.'" data-service-id="'.safe_html($service['ID']).'" data-service-nom="'.safe_html($service['NomService']).'" data-service-prix="'.safe_html($service['Prix']).'">';
+                                            echo safe_html($service['NomService']) . ' <span class="service-price">('.safe_html(number_format($service['Prix'], 2, ',', ' ')).' €)</span>';
+                                            echo '</button>';
+                                        }
+                                    }
+                                } else {
+                                    echo "<p style='color:red;'>Erreur lors de la préparation de la requête des services: " . mysqli_error($conn) . "</p>";
+                                }
+                            ?>
+                        </div>
+
+                        <div class="lab-calendar-container" id="lab-calendar-container-<?php echo $laboId; ?>"> <!-- CALENDRIER (initiallement caché) -->
+                            <h5>Disponibilités pour : <strong class="selected-service-name" style="color:#007bff;"></strong></h5>
+                            <div class="calendar-controls">
+                                <button class="prev-week" data-labo-id="<?php echo $laboId; ?>">< Sem. Prec.</button>
+                                <span class="week-display" id="week-display-lab-<?php echo $laboId; ?>"></span>
+                                <button class="next-week" data-labo-id="<?php echo $laboId; ?>">Sem. Suiv. ></button>
+                            </div>
+                            <table class="availability-grid" id="calendar-lab-<?php echo $laboId; ?>">
+                                <thead><tr>
+                                    <th style="width: 15%;">Heure</th> <th style="width: 12.14%;">Lun</th> <th style="width: 12.14%;">Mar</th> <th style="width: 12.14%;">Mer</th>
+                                    <th style="width: 12.14%;">Jeu</th> <th style="width: 12.14%;">Ven</th> <th style="width: 12.14%;">Sam</th> <th style="width: 12.14%;">Dim</th>
+                                </tr></thead>
+                                <tbody></tbody>
+                            </table>
+                            <form action="confirmation_paiement.php" method="POST" class="lab-rdv-form" id="form-lab-<?php echo $laboId; ?>">
+                                <input type="hidden" name="type_rdv" value="laboratoire"> <!-- Important pour la page de paiement -->
+                                <input type="hidden" name="labo_id" value="<?php echo $laboId; ?>">
+                                <input type="hidden" name="labo_nom" value="<?php echo safe_html($labo['Nom']); ?>">
+                                <input type="hidden" name="selected_service_id" id="selected-service-id-<?php echo $laboId; ?>">
+                                <input type="hidden" name="selected_service_nom" id="selected-service-nom-<?php echo $laboId; ?>">
+                                <input type="hidden" name="selected_date_db" id="selected-date-db-lab-<?php echo $laboId; ?>">
+                                <input type="hidden" name="selected_heure_debut_db" id="selected-heure-debut-db-lab-<?php echo $laboId; ?>">
+                                <input type="hidden" name="selected_heure_fin_db" id="selected-heure-fin-db-lab-<?php echo $laboId; ?>">
+                                <input type="hidden" name="selected_prix" id="selected-prix-lab-<?php echo $laboId; ?>">
+                                <div class="lab-actions-container"> <!-- BOUTONS D'ACTION (Prendre RDV / Se connecter) -->
+                                    <?php if ($user_is_logged_in): ?>
+                                        <button type="submit" class="btn-action btn-rdv" id="btn-rdv-lab-<?php echo $laboId; ?>" disabled>Choisir un créneau</button>
+                                    <?php else: ?>
+                                        <a href="login.php?redirect=laboratoire.php" class="btn-action btn-rdv">Se connecter pour prendre RDV</a>
+                                    <?php endif; ?>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
             <?php endif; ?>
-            </div>
         </div>
     </main>
+
+    <!-- Importation footer -->
     <?php require 'includes/footer.php'; ?>
 
+<?php // ______________/ Fermeture connexion BDD \_____________________
+    if ($conn) {
+        mysqli_close($conn);
+    }
+?>
+
 <script>
+// ______________/ GESTION DYNAMIQUE DU CALENDRIER ET DES SERVICES (JavaScript) \_____________________
 document.addEventListener('DOMContentLoaded', function() {
+    // ______________/ Fonctions Utilitaires JavaScript \_____________________
+
+    /// Calcule les dates de la semaine pour une date donnée (Lundi à Dimanche)
     function getWeekDates(date) {
         const startOfWeek = new Date(date);
         const dayOfWeek = startOfWeek.getDay();
-        const diff = startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const diff = startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Lundi = 1, Dimanche = 0
         startOfWeek.setDate(diff);
         startOfWeek.setHours(0, 0, 0, 0);
         const week = [];
@@ -316,6 +371,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return week;
     }
+
+    /// Formate une date en YYYY-MM-DD
     function formatDateToYYYYMMDD(date) {
         const d = new Date(date);
         let month = '' + (d.getMonth() + 1);
@@ -325,12 +382,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (day.length < 2) day = '0' + day;
         return [year, month, day].join('-');
     }
+
+    /// Formate une heure (HH:MM:SS) en HH:MM
     function formatTimeHHMM(timeStr) { return timeStr.substring(0, 5); }
 
-    let currentLabSelectedSlots = {}; 
-    let currentLabCalendarDate = {};  
-    let currentLabSelectedService = {}; 
 
+    // ______________/ Variables Globales pour le Calendrier \_____________________
+    let currentLabSelectedSlots = {};       // Stocke le créneau actuellement sélectionné pour chaque labo
+    let currentLabCalendarDate = {};      // Stocke la date de référence (premier jour de la semaine affichée) pour chaque labo
+    let currentLabSelectedService = {};   // Stocke le service actuellement sélectionné pour chaque labo
+
+
+    // ______________/ Rendu du Calendrier \_____________________
+
+    /// Affiche le calendrier pour un laboratoire, un service et une semaine donnés
     function renderLabCalendar(laboId, serviceId, serviceNom, servicePrixBase, weekDates, availabilities) {
         const calendarContainer = document.getElementById(`lab-calendar-container-${laboId}`);
         const calendarBody = calendarContainer.querySelector(`#calendar-lab-${laboId} tbody`);
@@ -343,49 +408,45 @@ document.addEventListener('DOMContentLoaded', function() {
         serviceNameDisplay.textContent = serviceNom; 
         weekDisplay.textContent = `${formatDateToYYYYMMDD(weekDates[0]).substring(8,10)}/${formatDateToYYYYMMDD(weekDates[0]).substring(5,7)} au ${formatDateToYYYYMMDD(weekDates[6]).substring(8,10)}/${formatDateToYYYYMMDD(weekDates[6]).substring(5,7)}`;
 
-
-        const slotsByTime = {};
+        const slotsByTime = {}; // Organise les disponibilités par heure de début
         if (Array.isArray(availabilities)) {
             availabilities.forEach(dispo => { 
                 const heureDebut = formatTimeHHMM(dispo.HeureDebut);
-                if (!slotsByTime[heureDebut]) slotsByTime[heureDebut] = Array(7).fill(null);
-                const dispoDate = new Date(dispo.Date + 'T00:00:00');
+                if (!slotsByTime[heureDebut]) slotsByTime[heureDebut] = Array(7).fill(null); // Initialise pour les 7 jours
+                const dispoDate = new Date(dispo.Date + 'T00:00:00'); // Assure la comparaison correcte des dates
                 const dayIndex = weekDates.findIndex(weekDate => weekDate.getTime() === dispoDate.getTime());
-                if (dayIndex !== -1) {
+                if (dayIndex !== -1) { // Si la date de dispo est dans la semaine actuelle
                     if (!slotsByTime[heureDebut][dayIndex]) slotsByTime[heureDebut][dayIndex] = [];
                     slotsByTime[heureDebut][dayIndex].push({
                         heureDebut: dispo.HeureDebut, heureFin: dispo.HeureFin,
                         prix: dispo.Prix, idServiceLabo: dispo.IdServiceLabo, date: dispo.Date,
-                        status: dispo.status // NOUVEAU : Récupérer le statut
+                        status: dispo.status // Statut du créneau (past, available)
                     });
                 }
             });
         }
 
-
-        const sortedTimes = Object.keys(slotsByTime).sort();
+        const sortedTimes = Object.keys(slotsByTime).sort(); // Trie les heures
         if (sortedTimes.length === 0) {
             calendarBody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:15px; font-style:italic; color:#6c757d;">Aucun créneau disponible pour ce service cette semaine.</td></tr>`;
         } else {
             sortedTimes.forEach(heureDebutAffichage => { 
                 const tr = calendarBody.insertRow();
                 const th = document.createElement('th');
-                th.textContent = heureDebutAffichage;
+                th.textContent = heureDebutAffichage; // Affiche l'heure de début dans la première colonne
                 tr.appendChild(th);
-                slotsByTime[heureDebutAffichage].forEach(daySlots => {
+                slotsByTime[heureDebutAffichage].forEach(daySlots => { // Pour chaque jour de la semaine
                     const td = tr.insertCell();
-                    if (daySlots && daySlots.length > 0) {
-                        const slotData = daySlots[0]; 
+                    if (daySlots && daySlots.length > 0) { // Si des créneaux existent pour cette heure et ce jour
+                        const slotData = daySlots[0]; // On prend le premier (normalement un seul par heure/jour pour un service)
                         const slotButton = document.createElement('button');
                         slotButton.classList.add('time-slot-button');
 
-                        // --- NOUVEAU : Logique pour les créneaux passés ---
-                        if (slotData.status === 'past') {
-                            slotButton.classList.add('past-slot'); // Applique le style gris
-                            slotButton.disabled = true; // Rend le bouton non cliquable
+                        if (slotData.status === 'past') { /// CRENEAU PASSE
+                            slotButton.classList.add('past-slot');
+                            slotButton.disabled = true;
                             slotButton.innerHTML = `Passé<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
-                        } else {
-                            // Créneaux disponibles
+                        } else { /// CRENEAU DISPONIBLE
                             slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">(${parseFloat(slotData.prix).toFixed(2)} €)</span>`;
                             slotButton.dataset.dateDb = slotData.date;
                             slotButton.dataset.heureDebutDb = slotData.heureDebut;
@@ -394,28 +455,31 @@ document.addEventListener('DOMContentLoaded', function() {
                             slotButton.dataset.idServiceLabo = slotData.idServiceLabo;
                             slotButton.onclick = function() { selectLabSlot(laboId, this); };
                         }
-                        // --- FIN NOUVEAU ---
-
                         td.appendChild(slotButton);
-                    } else { td.innerHTML = ' '; }
+                    } else { td.innerHTML = ' '; } // Case vide si pas de créneau
                 });
             });
         }
         
-        if (btnRdv) {
+        if (btnRdv) { // Réinitialise le bouton RDV
             btnRdv.disabled = true;
             btnRdv.textContent = 'Choisir un créneau';
             btnRdv.classList.remove('active');
         }
+        // Met à jour les champs cachés du formulaire
         const form = document.getElementById(`form-lab-${laboId}`);
         form.querySelector(`#selected-service-id-${laboId}`).value = serviceId;
         form.querySelector(`#selected-service-nom-${laboId}`).value = serviceNom;
         form.querySelector(`#selected-prix-lab-${laboId}`).value = ''; 
         form.querySelector(`#selected-date-db-lab-${laboId}`).value = '';
-        // CORRECTION DE L'ERREUR ICI : "selected-heure-fin-db-lab" au lieu de "selected-heure_fin_db-lab"
+        form.querySelector(`#selected-heure-debut-db-lab-${laboId}`).value = '';
         form.querySelector(`#selected-heure-fin-db-lab-${laboId}`).value = ''; 
     }
 
+
+    // ______________/ Récupération des Disponibilités (AJAX) \_____________________
+
+    /// Récupère les disponibilités pour un service et une période via AJAX, puis appelle renderLabCalendar
     function fetchLabAvailabilitiesAndRender(laboId, serviceId, serviceNom, servicePrixBase, dateRef) {
         if (!currentLabCalendarDate[laboId]) {
             currentLabCalendarDate[laboId] = new Date(dateRef);
@@ -433,84 +497,100 @@ document.addEventListener('DOMContentLoaded', function() {
         serviceNameDisp.textContent = serviceNom; 
         weekDisplay.textContent = "Chargement..."; 
         calendarBody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:15px; font-style:italic; color:#6c757d;">Chargement des disponibilités...</td></tr>`;
-        calendarContainer.style.display = 'block';
+        calendarContainer.style.display = 'block'; // Affiche le conteneur du calendrier
 
         fetch(`get_disponibilites_labo.php?service_id=${serviceId}&start_date=${startDateStr}&end_date=${endDateStr}`)
             .then(response => {
-                if (!response.ok) {
+                if (!response.ok) { // Gère les erreurs HTTP
                     return response.text().then(text => { 
                         throw new Error(`Erreur réseau: ${response.status} - ${response.statusText}. Réponse: ${text}`);
                     });
                 }
-                return response.json();
+                return response.json(); // Tente de parser la réponse en JSON
             })
             .then(data => {
-                if (data.error) {
-                    // Si PHP renvoie une erreur JSON structurée
+                if (data.error) { // Gère les erreurs applicatives renvoyées en JSON
                     throw new Error(data.error); 
                 }
-                // S'assurer que 'data' est un tableau même si PHP renvoie un objet avec 'data'
+                // S'assure que les données sont un tableau, même si PHP renvoie un objet avec une propriété 'data'
                 const availabilitiesData = Array.isArray(data) ? data : (data.data || []);
                 renderLabCalendar(laboId, serviceId, serviceNom, servicePrixBase, weekDates, availabilitiesData); 
             })
-            .catch(error => {
+            .catch(error => { // Gère les erreurs (réseau, JSON parse, applicatives)
                 console.error(`Erreur chargement dispos labo ${laboId}, service ${serviceId}:`, error);
-                serviceNameDisp.textContent = serviceNom;
+                serviceNameDisp.textContent = serviceNom; // Maintient le nom du service affiché
+                // Affiche quand même les dates de la semaine
                 weekDisplay.textContent = `${formatDateToYYYYMMDD(weekDates[0]).substring(8,10)}/${formatDateToYYYYMMDD(weekDates[0]).substring(5,7)} au ${formatDateToYYYYMMDD(weekDates[6]).substring(8,10)}/${formatDateToYYYYMMDD(weekDates[6]).substring(5,7)}`;
                 calendarBody.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;padding:10px;">Erreur : ${error.message}</td></tr>`;
                 calendarContainer.style.display = 'block';
             });
     }
 
+
+    // ______________/ Sélection d'un Créneau \_____________________
+
+    /// Gère la sélection d'un créneau horaire
     function selectLabSlot(laboId, slotButtonElement) { 
-        if (currentLabSelectedSlots[laboId]) {
+        if (currentLabSelectedSlots[laboId]) { // Désélectionne le précédent s'il y en a un
             currentLabSelectedSlots[laboId].classList.remove('selected');
         }
-        slotButtonElement.classList.add('selected');
+        slotButtonElement.classList.add('selected'); // Sélectionne le nouveau
         currentLabSelectedSlots[laboId] = slotButtonElement;
+
+        // Met à jour les champs cachés du formulaire avec les données du créneau
         const form = document.getElementById(`form-lab-${laboId}`);
         form.querySelector(`#selected-date-db-lab-${laboId}`).value = slotButtonElement.dataset.dateDb;
         form.querySelector(`#selected-heure-debut-db-lab-${laboId}`).value = slotButtonElement.dataset.heureDebutDb;
-        // CORRECTION DE L'ERREUR ICI : "selected-heure-fin-db-lab" au lieu de "selected-heure_fin_db-lab"
         form.querySelector(`#selected-heure-fin-db-lab-${laboId}`).value = slotButtonElement.dataset.heureFinDb; 
         form.querySelector(`#selected-prix-lab-${laboId}`).value = slotButtonElement.dataset.prix; 
+        
         const btnRdv = form.querySelector(`#btn-rdv-lab-${laboId}`);
-        if (btnRdv) {
+        if (btnRdv) { // Active le bouton RDV
             btnRdv.disabled = false;
-            btnRdv.textContent = 'Valider le créneau'; // Texte mis à jour
+            btnRdv.textContent = 'Valider le créneau';
             btnRdv.classList.add('active');
         }
     }
 
+
+    // ______________/ Gestion des Événements \_____________________
+
+    /// Écouteurs pour les boutons de sélection de service
     document.querySelectorAll('.service-select-button').forEach(button => {
         button.addEventListener('click', function() {
             const laboId = this.dataset.laboId;
             const serviceId = this.dataset.serviceId;
             const serviceNom = this.dataset.serviceNom;
             const servicePrix = this.dataset.servicePrix; 
+
+            // Gère le style 'active' pour les boutons de service
             document.querySelectorAll(`#services-list-${laboId} .service-select-button.active-service`).forEach(activeBtn => {
                 activeBtn.classList.remove('active-service');
             });
             this.classList.add('active-service');
-            currentLabCalendarDate[laboId] = new Date(); 
+
+            currentLabCalendarDate[laboId] = new Date(); // Réinitialise à la semaine actuelle
             fetchLabAvailabilitiesAndRender(laboId, serviceId, serviceNom, servicePrix, currentLabCalendarDate[laboId]);
         });
     });
 
+    /// Écouteurs pour les boutons de navigation du calendrier (semaine précédente/suivante)
     document.querySelectorAll('.lab-calendar-container').forEach(container => { 
-        const laboId = container.id.split('-')[3];
+        const laboId = container.id.split('-')[3]; // Extrait l'ID du labo depuis l'ID du conteneur
+
         container.querySelector('.prev-week').addEventListener('click', function() {
             if (currentLabCalendarDate[laboId] && currentLabSelectedService[laboId]) {
-                currentLabCalendarDate[laboId].setDate(currentLabCalendarDate[laboId].getDate() - 7);
+                currentLabCalendarDate[laboId].setDate(currentLabCalendarDate[laboId].getDate() - 7); // Semaine précédente
                 const service = currentLabSelectedService[laboId];
-                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prixBase, currentLabCalendarDate[laboId]); // Pass prixBase
+                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prixBase, currentLabCalendarDate[laboId]);
             }
         });
+
         container.querySelector('.next-week').addEventListener('click', function() {
              if (currentLabCalendarDate[laboId] && currentLabSelectedService[laboId]) {
-                currentLabCalendarDate[laboId].setDate(currentLabCalendarDate[laboId].getDate() + 7);
+                currentLabCalendarDate[laboId].setDate(currentLabCalendarDate[laboId].getDate() + 7); // Semaine suivante
                 const service = currentLabSelectedService[laboId];
-                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prixBase, currentLabCalendarDate[laboId]); // Pass prixBase
+                fetchLabAvailabilitiesAndRender(laboId, service.id, service.nom, service.prixBase, currentLabCalendarDate[laboId]);
             }
         });
     });

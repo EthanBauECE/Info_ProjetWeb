@@ -19,7 +19,7 @@
         $db_pass = ''; 
         $db_name = 'base_donne_web';
         $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-
+        $email_escaped = mysqli_real_escape_string($conn, $email); 
         if (!$conn) {//SI ON ARRIVE PAS A SE CONNECTER
             die("Erreur de connexion BDD: " . mysqli_connect_error()); //ON INDIQUE
         }

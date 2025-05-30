@@ -1,13 +1,7 @@
 <?php
-session_start(); // On doit démarrer la session pour pouvoir y accéder
-
-// Détruit toutes les variables de session
-$_SESSION = array();
-
-// Détruit la session
-session_destroy();
-
-// Redirige vers la page d'accueil
-header("location: index.php");
+session_start(); //IL FAUT S ETRE DEJA CONNECTER POUR POUVOIR SE DECONNECTER
+$_SESSION = array();//ON ENLEVE LES INFORMATIONS QUIA AVAIENT ETE STOCKE DANS LES PAGES
+session_destroy();//ON FERME LA SESSION POUR ACCUEILI UNE NOUVELLE
+header("location: index.php");//RETOURNER SUR LA PAGHE D ACCUEIL POUR POUVOIR SE RECONNECTER
 exit;
 ?>

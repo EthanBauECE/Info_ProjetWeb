@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 
-<!-- Importation du head -->
 <?php require 'includes/head.php'; ?>
-
 <body>
 
-    <!-- Importation du header -->
-    <?php require 'includes/header.php'; ?>
-
-    <!-- Importation du footer -->
-    <?php require 'includes/footer.php'; ?>
+    <?php require 'includes/header.php'; ?><!--on garde le haut de la page-->
+    <?php require 'includes/footer.php'; ?><!--on garde le bas de la page-->
 
 </body>
-
 </html>

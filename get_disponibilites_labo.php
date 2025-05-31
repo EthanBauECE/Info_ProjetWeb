@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 
 $response_data = []; 
 
-$conn = new mysqli("localhost", "root", "", "base_donne_web");
+$conn = new mysqli("localhost", "root", "", "base_donne_web");//APPEL LA BASE DE DONNEE
 
 if ($conn->connect_error) {
     echo json_encode(['error' => 'Database connection failed: ' . $conn->connect_error, 'data' => $response_data]);
@@ -13,9 +13,7 @@ if ($conn->connect_error) {
 }
 $conn->set_charset("utf8");
 
-// Définir le fuseau horaire pour des comparaisons précises
-date_default_timezone_set('Europe/Paris'); // Ou votre fuseau horaire
-
+date_default_timezone_set('Europe/Paris');//ON FAIT EN FOCNTION DE HEURE DE PARIS
 $serviceId = isset($_GET['service_id']) ? intval($_GET['service_id']) : 0;
 $startDateStr = isset($_GET['start_date']) ? $_GET['start_date'] : ''; 
 $endDateStr = isset($_GET['end_date']) ? $_GET['end_date'] : '';     
@@ -31,12 +29,10 @@ if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $star
     exit;
 }
 
-// $idPersonnelLaboGenerique = 0; // Cette variable n'est plus nécessaire si on ne filtre plus sur IdPersonnel
 
-$now = new DateTime(); // Heure actuelle
+$now = new DateTime(); //Actualise heure
 
 try {
-    // MODIFICATION ICI : Suppression de la condition IdPersonnel = ?
     $sqlDispo = "SELECT ID, Date, HeureDebut, HeureFin, IdPersonnel, IdServiceLabo, Prix 
                  FROM dispo 
                  WHERE IdServiceLabo = ?
@@ -51,8 +47,7 @@ try {
         exit;
     }
     
-    // MODIFICATION ICI : bind_param doit correspondre au nombre de '?'
-    // Il n'y a plus que 3 '?' : IdServiceLabo, Date, HeureDebut
+
     $stmtDispo->bind_param("iss", $serviceId, $startDateStr, $endDateStr); 
     
     if (!$stmtDispo->execute()) {
@@ -66,10 +61,7 @@ try {
     
     while ($row = $resultDispo->fetch_assoc()) {
         $slotEndTime = new DateTime($row['Date'] . ' ' . $row['HeureFin']);
-        
-        // Déterminer le statut du créneau: 'past' ou 'available'
         $row['status'] = ($slotEndTime < $now) ? 'past' : 'available'; 
-
         $response_data[] = $row; 
     }
     $stmtDispo->close();

@@ -31,7 +31,7 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
     <style>
         .main-container {
             padding: 2rem;
-            background-color: #f2f2f2;
+            background-color:white;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -42,8 +42,8 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             margin-bottom: 1rem;
         }
         .doctor-card {
-            background-color: #ffffff;
-            border: 1px solid #e0e0e0;
+            background-color: white;
+            border: 1px solid white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             width: 100%;
@@ -61,8 +61,8 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
         .doctor-photo {
             width: 170px;
             height: 220px;
-            border: 1px solid #e0e0e0;
-            background-color: #f8f8f8;
+            border: 1px solid white;
+            background-color: white;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -86,7 +86,7 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             font-size: 1.5rem;
             font-weight: 600;
             color: #333;
-            background-color: #eaf5ff;
+            background-color:rgb(234, 245, 255);
             padding: 12px;
             border-radius: 6px;
             margin: 0;
@@ -108,7 +108,7 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             margin-bottom: 10px;
         }
         .calendar-controls button {
-            background-color: #0a7abf;
+            background-color:rgb(10, 122, 191);
             color: white;
             border: none;
             padding: 8px 12px;
@@ -121,7 +121,7 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
         }
         .week-display {
             font-weight: bold;
-            color: #0a7abf;
+            color:rgb(10, 122, 191);
         }
 
         .availability-grid {
@@ -132,14 +132,14 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             margin-top: 1rem;
         }
         .availability-grid th {
-            background-color: #4a6fa5;
+            background-color:rgb(74, 111, 165);
             color: white;
             padding: 10px 5px;
             font-weight: 500;
             font-size: 0.85rem;
         }
         .availability-grid td {
-            border: 1px solid #e0e0e0;
+            border: 1px solidrgb(224, 224, 224);
             padding: 2px;
             color: #555;
             height: auto;
@@ -147,7 +147,7 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
         }
         .availability-grid td:empty { 
             border: 1px solid transparent; 
-            background-color: #f9f9f9;
+            background-color: white;
         }
 
         .time-slot-button {
@@ -155,10 +155,10 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             width: 100%;
             padding: 6px 4px;
             margin-bottom: 2px; 
-            border: 1px solid #bde0fe;
+            border: 1px solidrgb(189, 224, 254);
             border-radius: 4px;
-            background-color: #e6ffed; 
-            color: #155724; 
+            background-color:rgb(230, 255, 237); 
+            color:rgb(21, 87, 36); 
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: bold;
@@ -172,22 +172,22 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             color: #555;
         }
         .time-slot-button.selected {
-            background-color: #28a745 !important; 
+            background-color:rgb(40, 167, 69) !important; 
             color: white !important;
-            border-color: #1c7430;
+            border-color:rgb(28, 116, 48);
         }
         .time-slot-button.selected .slot-price {
-            color: #f0f0f0;
+            color:white;
         }
         .time-slot-button:hover:not(.selected) {
             background-color: #d4f8e0;
-            border-color: #a3e9b9;
+            border-color:rgb(163, 233, 185);
         }
 
         .time-slot-button.past-slot {
-            background-color: #e9ecef !important; 
-            color: #6c757d !important; 
-            border-color: #ced4da !important; 
+            background-color:rgb(233, 236, 239) !important; 
+            color:rgb(108, 117, 125) !important; 
+            border-color:rgb(206, 212, 218) !important; 
             cursor: not-allowed !important; 
             opacity: 0.7; 
             text-decoration: line-through; 
@@ -223,15 +223,15 @@ $resultMedecins = $conn->query($sqlMedecins);//ON CONNECTE A LA BASE DE DONNE DU
             transition: opacity 0.3s ease;
         }
         .btn-action:hover { opacity: 0.85; }
-        .btn-rdv { background-color: #6c757d; } 
-        .btn-rdv.active { background-color: #28a745; }
+        .btn-rdv { background-color:rgb(108, 117, 125); } 
+        .btn-rdv.active { background-color:rgb(40, 167, 69); }
         .btn-rdv:disabled {
             background-color: #ccc;
             cursor: not-allowed;
             opacity: 0.7;
         }
-        .btn-communiquer { background-color: #5dade2; }
-        .btn-cv { background-color: #4a6fa5; }
+        .btn-communiquer { background-color:rgb(93, 173, 226); }
+        .btn-cv { background-color:rgb(74, 111, 165); }
     </style>
 </head>
 <body>

@@ -1,63 +1,44 @@
-<?php /////////////////////////////////////////////// PHP //////////////////////////////////////////
-
-    // ______________/ Initialisation Session et Erreurs \_____________________
-    if (session_status() === PHP_SESSION_NONE) { // Démarre la session si elle n'est pas déjà active
+<?php
+    if (session_status() === PHP_SESSION_NONE) { //ON COMMENCE LA PAGE
         session_start();
     }
-    error_reporting(E_ALL);      // Affiche toutes les erreurs pour le débogage
-    ini_set('display_errors', 1); // Active l'affichage des erreurs
+    error_reporting(E_ALL);//REGARDER SI ERREURS
+    ini_set('display_errors', 1); //ON LES AFFICHE
 
-    // ______________/ Fonction Utilitaire \_____________________
-    /// Fonction pour échapper les caractères HTML
+ 
     function safe_html($value) {
-        return $value !== null ? htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') : '';
+        return $value !== 0 ? htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') : '';//ON PROTEGE VOIR SOUCE 
     }
 
-    // ______________/ Connexion à la base de données (MySQLi) \_____________________
-    $db_host = 'localhost';
+    $db_host = 'localhost';//ON SE CONNECTE A LA BDD
     $db_user = 'root';
     $db_pass = '';
     $db_name = 'base_donne_web';
-    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);//AVEC LES DIFFERENTES COLONNES A REMPLIR D INFO
 
-    /// Vérification de la connexion MySQLi
-    if (!$conn) {
-        die("Erreur de connexion BDD: " . mysqli_connect_error());
+    if (!$conn) {//SI ON PEUT PAS SE CONNECTER
+        die("Erreur de connexion BDD: " . mysqli_connect_error());//ON AFFICHE KL ERREUR
     }
     mysqli_set_charset($conn, 'utf8');
 
-    // ______________/ Variables de recherche \_____________________
-    $search_query = '';
-    $results = [];
-    $message = '';
+    $search_query = '';//POUVOIR RECHERCHER
+    $results = [];//AFFICHER LE RESULTAT
+    $message = '';//ET MESSAGE
 
-    // ______________/ Gestion de la recherche \_____________________
 
-    /// Si le formulaire est soumis en POST
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['recherche'])) {
-        $search_query = trim($_POST['recherche']);
-
-        /// Optionnel : stocker le terme de recherche en session pour qu'il soit pré-rempli dans le header
-        // $_SESSION['last_search_query'] = $search_query;
-
-        /// Rediriger vers la page elle-même mais avec le terme de recherche en GET
-        /// C'est une méthode courante pour éviter le re-soumission de formulaire au rafraîchissement.
-        header("Location: recherche.php?recherche=" . urlencode($search_query));
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['recherche'])) {//SI ON EST POUR LA RECHERCHE
+        $search_query = trim($_POST['recherche']);//RECHERCHE
+        header("Location: recherche.php?recherche=" . urlencode($search_query));//ON OUVRE LA PAGE RECHERCHE
         exit();
 
     }
-    /// Si la page est accédée via GET (après redirection POST ou directement)
-    elseif (isset($_GET['recherche'])) {
-        $search_query = trim($_GET['recherche']);
+    elseif (isset($_GET['recherche'])) {//SI Y A RECHERHCE
+        $search_query = trim($_GET['recherche']);//ALORS RECHERCHE
 
-        if (empty($search_query)) {
-            $message = "Veuillez entrer un terme de recherche.";
+        if (empty($search_query)) {//SI Y A RIEN QUI EST ECRIT
+            $message = "Veuillez entrer un terme de recherche.";//ON INFORME QU IL FAUT INDIQUER A L I+UTILISATEUR
         } else {
-            /// Préparer le terme de recherche pour la clause LIKE
             $search_param = '%' . $search_query . '%';
-
-            // ______________/ Requête SQL unifiée avec UNION \_____________________
-            /// On sélectionne des colonnes communes ou NULL pour maintenir la compatibilité des UNION
             $sql_search = "
                 (SELECT
                     'personnel' AS type_result,
@@ -116,203 +97,185 @@
                 LEFT JOIN adresse ad ON la.ID_Adresse = ad.ID
                 WHERE sl.NomService LIKE ?)
                 ORDER BY nom_complet;
-            ";
+            ";//LA C EST POUR CHERCHER DES MEDECIN DES LABO OU DES MEDECINS SPECIALISES
 
-            /// Préparation de la requête
-            $stmt_search = mysqli_prepare($conn, $sql_search);
+            $stmt_search = mysqli_prepare($conn, $sql_search);//ON SE CONNECTE A LA BASE DE DONNEE
 
             if ($stmt_search) {
-                /// Liaison des paramètres (tous de type string 's')
-                mysqli_stmt_bind_param($stmt_search, "ssss", $search_param, $search_param, $search_param, $search_param);
-
-                /// Exécution de la requête
-                if (mysqli_stmt_execute($stmt_search)) {
-                    $result_set = mysqli_stmt_get_result($stmt_search);
+                mysqli_stmt_bind_param($stmt_search, "ssss", $search_param, $search_param, $search_param, $search_param);//ON RELIE LES INFOS
+                if (mysqli_stmt_execute($stmt_search)) {//POUR POUVOIR CONNECTER A LA BDD
+                    $result_set = mysqli_stmt_get_result($stmt_search);//RESULTAT DE LA RECHERCHE
                     $results = mysqli_fetch_all($result_set, MYSQLI_ASSOC);
                     mysqli_free_result($result_set);
 
-                    if (empty($results)) {
-                        $message = "Aucun résultat trouvé pour \"" . safe_html($search_query) . "\".";
+                    if (empty($results)) {//SI RIEN DANS LA RCHCERHCE
+                        $message = "Aucun résultat trouvé pour \"" . safe_html($search_query) . "\".";//INDIQUE QU ON A PAS TROUVE DE REPONSE A LA RECHERCHE
                     } else {
-                        $message = count($results) . " résultat(s) trouvé(s) pour \"" . safe_html($search_query) . "\".";
+                        $message = count($results) . " résultat(s) trouvé(s) pour \"" . safe_html($search_query) . "\".";//INDIQUER CE QU ON A TROUVE POUR LA RECHERCHE
                     }
                 } else {
-                    $message = "Erreur lors de l'exécution de la recherche : " . mysqli_stmt_error($stmt_search);
-                    error_log("Search query execution failed: " . mysqli_stmt_error($stmt_search));
+                    $message = "Erreur : " . mysqli_stmt_error($stmt_search);//PREVENIR UTILISATEUR DE L ERREUR
+                    error_log("Search query execution failed: " . mysqli_stmt_error($stmt_search));// LES ERREURS
                 }
                 mysqli_stmt_close($stmt_search);
             } else {
-                $message = "Erreur lors de la préparation de la recherche : " . mysqli_error($conn);
+                $message = "Erreur " . mysqli_error($conn);//INDIQUER L ERREUR POUR UTILISATEUR
                 error_log("Search query preparation failed: " . mysqli_error($conn));
             }
         }
     }
 ?>
 
-<!DOCTYPE html> <!-- ////////////////////////////////////////// HTML ///////////////////////////////////////////-->
 <html lang="fr">
 
-    <!-- Importation head -->
     <?php require 'includes/head.php'; ?>
 
     <body>
-
-        <!-- Importation header -->
-        <?php require 'includes/header.php'; ?>
-
+        <?php require 'includes/header.php'; ?><!--GARDER LE HAUT D EPAGE-->
         <main class="search-main">
             <div class="search-container">
 
-                <h1 class="search-page-title">Résultats de recherche</h1>
-
-                <!-- Message d'information/erreur -->
-                <?php if (!empty($message)): ?>
-                    <div class="search-alert <?= empty($results) ? 'info' : 'success' ?>">
+                <h1 class="search-page-title">Résultats de recherche</h1><!--TITRE POUR AFFICHER LE RESULTAT DE LA RECHERHCE-->
+                <?php if (!empty($message)): ?><!--SI PAS DE MESSAGE-->
+                    <div class="search-alert <?= empty($results) ? 'info' : 'success' ?>"><!--CREER UNE ALERTE-->
                         <?= safe_html($message) ?>
                     </div>
                 <?php endif; ?>
 
-                <!-- Liste des résultats -->
                 <div class="search-results-list">
-                    <?php if (!empty($results)): ?>
-                        <?php foreach ($results as $result): ?>
+                    <?php if (!empty($results)): ?><!--SI ON A DES RESULTAT -->
+                        <?php foreach ($results as $result): ?><!--ON PARCOURS TOUS LES RESULTATS POSSIBLES-->
                             <div class="result-card type-<?= safe_html($result['type_result']) ?>">
 
                                 <div class="result-header"> <!-- ENTETE CARTE RESULTAT -->
-                                    <?php if ($result['type_result'] === 'personnel'): ?>
+                                    <?php if ($result['type_result'] === 'personnel'): ?><!-- SI CEST UN PERSONNEL-->
                                         <div class="result-photo-container">
-                                            <img src="<?= safe_html($result['photo_path'] ?: './images/default_doctor.png') ?>" alt="Photo de <?= safe_html($result['nom_complet']) ?>" class="result-photo">
+                                            <img src="<?= safe_html($result['photo_path'] ?: './images/default_doctor.png') ?>" alt="Photo de <?= safe_html($result['nom_complet']) ?>" class="result-photo"><!--CA AFFICHE LA PHOTO OU ALORS LE FOND BLANC PAR DEFAUT-->
                                         </div>
                                         <div class="result-title-details">
-                                            <h3>Dr. <?= safe_html($result['nom_complet']) ?></h3>
-                                            <p class="result-type"><?= safe_html($result['categorie']) ?></p>
+                                            <h3>Dr. <?= safe_html($result['nom_complet']) ?></h3><!--POUR AFFICHER LE NIOM DU DOCTEUR--> 
+                                            <p class="result-type"><?= safe_html($result['categorie']) ?></p><!-- ET AUSSI SA CATEGORIE-->
                                         </div>
-                                    <?php elseif ($result['type_result'] === 'laboratoire'): ?>
-                                        <div class="result-photo-container">
-                                            <img src="<?= safe_html($result['photo_path'] ?: './images/default_labo.jpg') ?>" alt="Photo de <?= safe_html($result['nom_complet']) ?>" class="result-photo">
-                                        </div>
-                                        <div class="result-title-details">
-                                            <h3>Laboratoire : <?= safe_html($result['nom_complet']) ?></h3>
-                                            <p class="result-type"><?= safe_html($result['categorie']) ?></p>
-                                        </div>
-                                    <?php elseif ($result['type_result'] === 'service'): ?>
-                                        <div class="result-photo-container">
-                                            <img src="<?= safe_html($result['photo_path'] ?: './images/default_labo.jpg') ?>" alt="Photo du laboratoire de service" class="result-photo">
+                                    <?php elseif ($result['type_result'] === 'laboratoire'): ?><!--SI C EST UN LABORATOIRE-->
+                                        <div class="result-photo-container"> <!-- EN CE QUI CONCERNE LA PHOTO-->
+                                            <img src="<?= safe_html($result['photo_path'] ?: './images/default_labo.jpg') ?>" alt="Photo de <?= safe_html($result['nom_complet']) ?>" class="result-photo"><!--ON AFFICHE L IMAGE ET LE NOM-->
                                         </div>
                                         <div class="result-title-details">
-                                            <h3>Service : <?= safe_html($result['nom_complet']) ?></h3>
-                                            <p class="result-type">Du laboratoire : <?= safe_html($result['labo_nom_associe']) ?></p>
+                                            <h3>Laboratoire : <?= safe_html($result['nom_complet']) ?></h3><!--AFFICHER LE NOM DU LABO-->
+                                            <p class="result-type"><?= safe_html($result['categorie']) ?></p><!--POUR LA CATEGORIE DU LABO-->
+                                        </div>
+                                    <?php elseif ($result['type_result'] === 'service'): ?><!--CA C EST POUR LES SERVIES QU IL PROPOSE-->
+                                        <div class="result-photo-container">
+                                            <img src="<?= safe_html($result['photo_path'] ?: './images/default_labo.jpg') ?>" alt="Photo du laboratoire de service" class="result-photo"><!--AFFICHER LA PHOTO DU LABO AVEC LES SERVIVES-->
+                                        </div>
+                                        <div class="result-title-details">
+                                            <h3>Service : <?= safe_html($result['nom_complet']) ?></h3><!-- POUR LE NOM-->
+                                            <p class="result-type">Du laboratoire : <?= safe_html($result['labo_nom_associe']) ?></p><!--AFFICHER LE NOM DU LABO-->
                                         </div>
                                     <?php endif; ?>
                                 </div>
 
-                                <div class="result-body"> <!-- CORPS CARTE RESULTAT -->
-                                    <?php if ($result['type_result'] === 'personnel'): ?>
-                                        <p><strong>Email :</strong> <a href="mailto:<?= safe_html($result['email']) ?>"><?= safe_html($result['email']) ?></a></p>
-                                        <p><strong>Téléphone :</strong> <?= safe_html($result['telephone']) ?></p>
+                                <div class="result-body">
+                                    <?php if ($result['type_result'] === 'personnel'): ?><!-- SI CEST UN PERSONNEL-->
+                                        <p><strong>Email :</strong> <a href="mailto:<?= safe_html($result['email']) ?>"><?= safe_html($result['email']) ?></a></p><!--ON FAIT LE LIEN AVEC L EMAIL ASSOCIEE ET AFFICHE-->
+                                        <p><strong>Téléphone :</strong> <?= safe_html($result['telephone']) ?></p><!-- IDEM POUR LE TEL-->
                                         <p><strong>Adresse :</strong>
                                             <?php
                                                 echo safe_html($result['adresse_ligne']);
-                                                if (!empty($result['adresse_code_postal'])) echo ', ' . safe_html($result['adresse_code_postal']);
-                                                if (!empty($result['adresse_ville'])) echo ' ' . safe_html($result['adresse_ville']);
-                                                if (!empty($result['adresse_infos_comp'])) {
-                                                    echo '<br><em class="address-details">' . safe_html($result['adresse_infos_comp']) . '</em>';
+                                                if (!empty($result['adresse_code_postal'])) echo ', ' . safe_html($result['adresse_code_postal']);// LA ON FAIT PAREIL POUR LE CODE POSTAL DU MEDECIN ON L AJOUTE
+                                                if (!empty($result['adresse_ville'])) echo ' ' . safe_html($result['adresse_ville']);//ON AJOUTE AUSSI ICI L ADRESSE DU PERSONNEL
+                                                if (!empty($result['adresse_infos_comp'])) {//LES INFO S EN PLUS SI BESOIN
+                                                    echo '<br><em class="address-details">' . safe_html($result['adresse_infos_comp']) . '</em>';//DOCN LES INFOS COMPLEMENBTAIRES
                                                 }
                                             ?>
                                         </p>
                                         <?php
-                                        /// Récupérer la description spécifique du personnel
-                                        $personnel_desc_row = null;
-                                        $sql_desc = "SELECT Description FROM utilisateurs_personnel WHERE ID = ?";
-                                        $stmt_desc = mysqli_prepare($conn, $sql_desc);
+                                        $personnel_desc_row = 0;//ON INTITIALISEE
+                                        $sql_desc = "SELECT Description FROM utilisateurs_personnel WHERE ID = ?";//ON PREND LA DESCRIPTION DE L UTILISATEUR PERSONNEL
+                                        $stmt_desc = mysqli_prepare($conn, $sql_desc);//ON RELIE A LA TABLE
                                         if ($stmt_desc) {
-                                            mysqli_stmt_bind_param($stmt_desc, "i", $result['id']); // 'i' pour integer
-                                            if (mysqli_stmt_execute($stmt_desc)) {
-                                                $desc_result_set = mysqli_stmt_get_result($stmt_desc);
-                                                $personnel_desc_row = mysqli_fetch_assoc($desc_result_set);
+                                            mysqli_stmt_bind_param($stmt_desc, "i", $result['id']); //REGARDER L ID DE L UTILISATEUR
+                                            if (mysqli_stmt_execute($stmt_desc)) {//ON FAIT CE QUI EST DEMANDEEE
+                                                $desc_result_set = mysqli_stmt_get_result($stmt_desc);//ON REGARDE LE RESULTAT
+                                                $personnel_desc_row = mysqli_fetch_assoc($desc_result_set);//ON PEUT MAINTENANT LE RELIER
                                                 mysqli_free_result($desc_result_set);
                                             }
-                                            mysqli_stmt_close($stmt_desc);
+                                            mysqli_stmt_close($stmt_desc);//ON REFERMEE
                                         }
 
-                                        if ($personnel_desc_row && !empty($personnel_desc_row['Description'])): ?>
-                                            <p><strong>Description :</strong> <?= nl2br(safe_html($personnel_desc_row['Description'])) ?></p>
+                                        if ($personnel_desc_row && !empty($personnel_desc_row['Description'])): ?><!--est ce qu il ya une descriptionn-->
+                                            <p><strong>Description :</strong> <?= nl2br(safe_html($personnel_desc_row['Description'])) ?></p><!--on affiche cette description-->
                                         <?php endif; ?>
-                                    <?php elseif ($result['type_result'] === 'laboratoire'): ?>
-                                        <p><strong>Email :</strong> <a href="mailto:<?= safe_html($result['email']) ?>"><?= safe_html($result['email']) ?></a></p>
-                                        <p><strong>Téléphone :</strong> <?= safe_html($result['telephone']) ?></p>
-                                        <p><strong>Adresse :</strong>
+                                    <?php elseif ($result['type_result'] === 'laboratoire'): ?><!--si cest un laboratoire-->
+                                        <p><strong>Email :</strong> <a href="mailto:<?= safe_html($result['email']) ?>"><?= safe_html($result['email']) ?></a></p><!--on affiche l email-->
+                                        <p><strong>Téléphone :</strong> <?= safe_html($result['telephone']) ?></p><!--on affiche le numero de telephoen aussi-->
+                                        <p><strong>Adresse :</strong><!--idem pour l adresse-->
                                             <?php
                                                 echo safe_html($result['adresse_ligne']);
-                                                if (!empty($result['adresse_code_postal'])) echo ', ' . safe_html($result['adresse_code_postal']);
-                                                if (!empty($result['adresse_ville'])) echo ' ' . safe_html($result['adresse_ville']);
-                                                if (!empty($result['adresse_infos_comp'])) {
+                                                if (!empty($result['adresse_code_postal'])) echo ', ' . safe_html($result['adresse_code_postal']);// AFFICHER D ABORD LE CODE POSTALE ASSOCIEE
+                                                if (!empty($result['adresse_ville'])) echo ' ' . safe_html($result['adresse_ville']);//PUIS L ADRESSE
+                                                if (!empty($result['adresse_infos_comp'])) {//LES INFOS COMPLEMENTIARE SI Y EN A 
                                                     echo '<br><em class="address-details">' . safe_html($result['adresse_infos_comp']) . '</em>';
                                                 }
                                             ?>
                                         </p>
-                                        <?php if (!empty($result['description_complementaire'])): ?>
-                                            <p><strong>Description :</strong> <?= nl2br(safe_html($result['description_complementaire'])) ?></p>
+                                        <?php if (!empty($result['description_complementaire'])): ?><!--verif si y a une descripton en plus-->
+                                            <p><strong>Description :</strong> <?= nl2br(safe_html($result['description_complementaire'])) ?></p><!--afficher la dercription complementaire-->
                                         <?php endif; ?>
-                                    <?php elseif ($result['type_result'] === 'service'): ?>
-                                        <p><strong>Prix :</strong> <?= safe_html(number_format((float)$result['service_prix'], 2, ',', ' ')) ?> €</p>
-                                        <?php if (!empty($result['description_complementaire'])): ?>
-                                            <p><strong>Description du service :</strong> <?= nl2br(safe_html($result['description_complementaire'])) ?></p>
+                                    <?php elseif ($result['type_result'] === 'service'): ?><!--si c est un service-->
+                                        <p><strong>Prix :</strong> <?= safe_html(number_format((float)$result['service_prix'], 2, ',', ' ')) ?> €</p><!--afficher le prix-->
+                                        <?php if (!empty($result['description_complementaire'])): ?><!--si y a laors on affiche-->
+                                            <p><strong>Description du service :</strong> <?= nl2br(safe_html($result['description_complementaire'])) ?></p><!--source: https://www.php.net/manual/fr/function.htmlspecialchars.php-->
                                         <?php endif; ?>
-                                        <p><strong>Contact Laboratoire :</strong> <a href="mailto:<?= safe_html($result['email']) ?>"><?= safe_html($result['email']) ?></a></p>
-                                        <p><strong>Téléphone Laboratoire :</strong> <?= safe_html($result['telephone']) ?></p>
-                                        <p><strong>Adresse Laboratoire :</strong>
+                                        <p><strong>Contact Laboratoire :</strong> <a href="mailto:<?= safe_html($result['email']) ?>"><?= safe_html($result['email']) ?></a></p><!--on affiche l email asoociee-->
+                                        <p><strong>Téléphone Laboratoire :</strong> <?= safe_html($result['telephone']) ?></p><!--pareil pour le numero de tel-->
+                                        <p><strong>Adresse Laboratoire :</strong><!-- pour indicztion de l adresse-->
                                             <?php
-                                                echo safe_html($result['adresse_ligne']);
-                                                if (!empty($result['adresse_code_postal'])) echo ', ' . safe_html($result['adresse_code_postal']);
-                                                if (!empty($result['adresse_ville'])) echo ' ' . safe_html($result['adresse_ville']);
-                                                if (!empty($result['adresse_infos_comp'])) {
-                                                    echo '<br><em class="address-details">' . safe_html($result['adresse_infos_comp']) . '</em>';
+                                                echo safe_html($result['adresse_ligne']);//AFFICHE ADRESSE-->
+                                                if (!empty($result['adresse_code_postal'])) echo ', ' . safe_html($result['adresse_code_postal']);// A LA SUITE METTRE CODE ¨POSTAL
+                                                if (!empty($result['adresse_ville'])) echo ' ' . safe_html($result['adresse_ville']);//PUIS AJOUTER EN PLUS L ADRESSE
+                                                if (!empty($result['adresse_infos_comp'])) {//SI IL Y A DES INFO COMPLEMENTAIRES
+                                                    echo '<br><em class="address-details">' . safe_html($result['adresse_infos_comp']) . '</em>';//ON LES AJOUTERE AUSSI A LA SUITE
                                                 }
                                             ?>
                                         </p>
                                     <?php endif; ?>
                                 </div>
 
-                                <div class="result-actions"> <!-- ACTIONS CARTE RESULTAT -->
-                                    <?php if ($result['type_result'] === 'personnel'): ?>
-                                        <a href="medecine_general.php#doctor-<?= safe_html($result['id']) ?>" class="btn-action">Voir les disponibilités</a>
-                                        <a href="chat.php?target_id=<?= safe_html($result['id']) ?>" class="btn-action btn-communiquer">Communiquer</a>
-                                        <a href="cv_medecin.php?id=<?= safe_html($result['id']) ?>" class="btn-action btn-cv">Voir CV</a>
-                                    <?php elseif ($result['type_result'] === 'laboratoire'): ?>
-                                        <a href="laboratoire.php#labo-<?= safe_html($result['id']) ?>" class="btn-action">Voir les services et disponibilités</a>
-                                    <?php elseif ($result['type_result'] === 'service'): ?>
-                                        <a href="laboratoire.php#labo-<?= safe_html($result['labo_id']) ?>" class="btn-action">Voir le laboratoire</a>
+                                <div class="result-actions">
+                                    <?php if ($result['type_result'] === 'personnel'): ?><!-- SI C EST UN PERSONNEL -->
+                                        <a href="medecine_general.php#doctor-<?= safe_html($result['id']) ?>" class="btn-action">Voir les disponibilités</a><!-- BOUTON POIUR POUVOIR VOIR LES DISPO-->
+                                        <a href="chat.php?target_id=<?= safe_html($result['id']) ?>" class="btn-action btn-communiquer">Communiquer</a><!--BOUTON POUR DISCUTER AVCE LUI -->
+                                        <a href="cv_medecin.php?id=<?= safe_html($result['id']) ?>" class="btn-action btn-cv">Voir CV</a><!-- BOUTON POUR VOIR LE CV DU DOCTEUR -->
+                                    <?php elseif ($result['type_result'] === 'laboratoire'): ?><!-- SI C EST UN LABORATOIRE -->
+                                        <a href="laboratoire.php#labo-<?= safe_html($result['id']) ?>" class="btn-action">Voir les services et disponibilités</a><!--BOUTON POUUR POUVOIRR VOIR LE S SERVICES ET DISPO DU LABO -->
+                                    <?php elseif ($result['type_result'] === 'service'): ?><!-- SI C EST UN SERVICE -->
+                                        <a href="laboratoire.php#labo-<?= safe_html($result['labo_id']) ?>" class="btn-action">Voir le laboratoire</a><!-- BOUTON POUR POUVOIR VOIR LE LABORATOIRE -->
                                     <?php endif; ?>
                                 </div>
 
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                </div> <!-- FIN .search-results-list -->
+                </div> 
 
-            </div> <!-- FIN .search-container -->
+            </div> 
         </main>
 
-        <!-- Importation footer -->
-        <?php require 'includes/footer.php'; ?>
-
-        <!-- // Fermeture de la connexion a la BD
-        <?php mysqli_close($conn); ?> -->
+        <?php require 'includes/footer.php'; ?><!--ON GARDE FOOTER-->
+        <?php mysqli_close($conn); ?> 
 
     </body>
 </html>
 
-<!-- ////////////////////////////////////////// CSS ///////////////////////////////////////////-->
 <style>
-    /* Styles généraux pour la page de recherche */
     .search-main {
         padding: 2rem;
-        background-color: #f2f2f2;
+        background-color:rgb(242, 242, 242);
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: calc(100vh - 160px); /* Ajuster si hauteur header/footer différente */
+        min-height: calc(100vh - 160px); 
     }
 
     .search-container {
@@ -328,13 +291,12 @@
 
     .search-page-title {
         text-align: center;
-        color: #0a7abf; /* Couleur Omnes Education */
+        color:rgb(10, 122, 191);
         margin-bottom: 2.5rem;
         font-size: 2.2rem;
         font-weight: 600;
     }
 
-    /* Alert messages */
     .search-alert {
         padding: 15px;
         margin-bottom: 20px;
@@ -343,17 +305,16 @@
         font-weight: 500;
     }
     .search-alert.success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+        background-color:rgb(212, 237, 218);
+        color:rgb(21, 87, 36);
+        border: 1px solidrgb(190, 231, 200);
     }
     .search-alert.info {
-        background-color: #eaf5ff; /* Bleu clair */
-        color: #0a7abf;
-        border: 1px solid #cce0ff;
+        background-color: white;
+        color:rgb(10, 122, 191);
+        border: 1px solidrgb(204, 224, 255);
     }
 
-    /* Result cards */
     .search-results-list {
         display: flex;
         flex-direction: column;
@@ -361,8 +322,8 @@
     }
 
     .result-card {
-        background-color: #f8f9fa;
-        border: 1px solid #e0e0e0;
+        background-color:rgb(248, 249, 250);
+        border: 1px solidrgb(224, 224, 224);
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         padding: 1.5rem;
@@ -385,11 +346,11 @@
         height: 80px;
         border-radius: 50%;
         overflow: hidden;
-        border: 2px solid #0a7abf; /* Couleur Omnes */
+        border: 2px solidrgb(10, 122, 191);
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #f0f7ff; /* Fond bleu très clair */
+        background-color: white;
     }
 
     .result-photo {
@@ -401,7 +362,7 @@
     .result-title-details h3 {
         margin: 0;
         font-size: 1.3rem;
-        color: #0a7abf; /* Couleur Omnes */
+        color:rgb(10, 122, 191); 
     }
 
     .result-title-details .result-type {
@@ -418,11 +379,11 @@
     }
 
     .result-body strong {
-        color: #0a7abf; /* Couleur Omnes */
+        color:rgb(10, 122, 191); 
         font-weight: 600;
     }
     .result-body p a {
-        color: #007bff; /* Bleu lien standard */
+        color:rgb(0, 123, 255);
         text-decoration: none;
     }
     .result-body p a:hover {
@@ -430,7 +391,7 @@
     }
     .result-body .address-details {
         font-size: 0.85em;
-        color: #6c757d; /* Gris standard pour détails */
+        color:rgb(108, 117, 125);
     }
 
     .result-actions {
@@ -454,20 +415,18 @@
         cursor: pointer;
         text-decoration: none;
         transition: background-color 0.2s ease, transform 0.2s ease;
-        background-color: #007bff; /* Bleu bouton standard */
+        background-color:rgb(0, 123, 255); 
     }
 
     .btn-action:hover {
-        background-color: #0056b3; /* Bleu plus foncé au survol */
+        background-color:rgb(0, 86, 179); 
         transform: translateY(-1px);
     }
-    .btn-action.btn-communiquer { background-color: #5dade2; /* Bleu ciel */ }
+    .btn-action.btn-communiquer { background-color: #5dade2; }
     .btn-action.btn-communiquer:hover { background-color: #4499cc; }
-    .btn-action.btn-cv { background-color: #4a6fa5; /* Bleu gris */ }
+    .btn-action.btn-cv { background-color: #4a6fa5; }
     .btn-action.btn-cv:hover { background-color: #3b5a86; }
 
-
-    /* Media queries pour responsivité */
     @media (max-width: 768px) {
         .search-container {
             padding: 1.5rem;
@@ -489,7 +448,7 @@
             font-size: 1.8rem;
         }
         .result-body strong {
-            display: block; /* Force strong à la nouvelle ligne sur petits écrans pour lisibilité */
+            display: block; 
         }
     }
 </style>

@@ -1,48 +1,35 @@
-<?php /////////////////////////////////////////////// PHP //////////////////////////////////////////
+<?php 
 
-    // ______________/ Initialisation Session & Erreurs \_____________________
-    if (session_status() === PHP_SESSION_NONE) { // Assurez-vous que cette ligne est avant toute sortie HTML ou autre session_start()
+    if (session_status() === PHP_SESSION_NONE) { 
         session_start();
     }
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
 
-
-    // ______________/ Vérification des droits d'accès \_____________________
-    /// Redirection si non connecté ou non Admin
     if (!isset($_SESSION["user_id"]) || $_SESSION["user_type"] !== "Admin") {
         header("Location: login.php");
         exit();
     }
 
-
-    // ______________/ Connexion Base de Données \_____________________
-    $db_host = 'localhost';
+    $db_host = 'localhost';//POUR SE COINNECTER A LA BDD
     $db_user = 'root';
     $db_pass = '';
     $db_name = 'base_donne_web';
     $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
-    /// Vérification de la connexion MySQLi
     if (!$conn) {
-        die("Erreur de connexion BDD: " . mysqli_connect_error());
+        die("Erreur de connexion BDD: " . mysqli_connect_error());//INDIQUER LE PB
     }
     mysqli_set_charset($conn, 'utf8');
 
 
     $success_message = '';
     $error_message = '';
-    $form_errors = []; // Pour stocker les erreurs de validation pour chaque formulaire
+    $form_errors = []; //INIT POOUR ERRERUS
 
-
-    // ______________/ Fonction utilitaire \_____________________
-    /// Fonction pour afficher du HTML de manière sécurisée
     function safe_html($value) {
         return $value !== null ? htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') : '';
     }
-
-
-    // ______________/ Récupération des données pour les menus déroulants \_____________________
 
     /// Liste du Personnel
     $personnel_list = [];
@@ -54,12 +41,11 @@
         }
         mysqli_free_result($result_personnel);
     } else {
-        $error_message .= " Erreur chargement personnel: " . mysqli_error($conn);
+        $error_message .= " Erreur chargement personnel: " . mysqli_error($conn);//INIDQUER ERREUR
     }
 
-    /// Liste des Laboratoires
-    $laboratories_list = [];
-    $sql_labs = "SELECT ID, Nom FROM laboratoire ORDER BY Nom";
+    $laboratories_list = [];//INIT LES LABO
+    $sql_labs = "SELECT ID, Nom FROM laboratoire ORDER BY Nom";//RELIER A LA BASE DE DONE
     $result_labs = mysqli_query($conn, $sql_labs);
     if ($result_labs) {
         while ($row = mysqli_fetch_assoc($result_labs)) {
@@ -67,12 +53,11 @@
         }
         mysqli_free_result($result_labs);
     } else {
-        $error_message .= " Erreur chargement laboratoires: " . mysqli_error($conn);
+        $error_message .= " Erreur chargement laboratoires: " . mysqli_error($conn);//INIDQUER ERREUR TROUBVE
     }
 
-    /// Liste des Services de Laboratoire
-    $services_list = [];
-    $sql_services = "SELECT sl.ID, sl.NomService, l.Nom AS LaboNom FROM service_labo sl JOIN laboratoire l ON sl.ID_Laboratoire = l.ID ORDER BY l.Nom, sl.NomService";
+    $services_list = [];//INIT LES SERVICE 
+    $sql_services = "SELECT sl.ID, sl.NomService, l.Nom AS LaboNom FROM service_labo sl JOIN laboratoire l ON sl.ID_Laboratoire = l.ID ORDER BY l.Nom, sl.NomService";//FAIT APPEL BASE DE DONEE
     $result_services = mysqli_query($conn, $sql_services);
     if ($result_services) {
         while ($row = mysqli_fetch_assoc($result_services)) {
@@ -83,8 +68,7 @@
         $error_message .= " Erreur chargement services: " . mysqli_error($conn);
     }
 
-    /// Liste des Créneaux de Disponibilité
-    $dispo_list = [];
+    $dispo_list = [];//ON INIT LES DISPO
     $sql_dispo = "
         SELECT
             d.ID, d.Date, d.HeureDebut, d.HeureFin, d.Prix,
@@ -106,12 +90,11 @@
         }
         mysqli_free_result($result_dispo);
     } else {
-        $error_message .= " Erreur chargement disponibilités: " . mysqli_error($conn);
+        $error_message .= " Erreur chargement disponibilités: " . mysqli_error($conn);//PREVENIR ERREUR
     }
 
-    /// Liste de TOUS les Utilisateurs
-    $all_users_list = [];
-    $sql_all_users = "SELECT ID, Nom, Prenom, TypeCompte FROM utilisateurs ORDER BY Nom, Prenom";
+    $all_users_list = [];//ON INIT
+    $sql_all_users = "SELECT ID, Nom, Prenom, TypeCompte FROM utilisateurs ORDER BY Nom, Prenom";//RIELIER CA A LA LA BASE DE DONNE AVEC BONNE INFO
     $result_all_users = mysqli_query($conn, $sql_all_users);
     if ($result_all_users) {
         while ($row = mysqli_fetch_assoc($result_all_users)) {
@@ -119,22 +102,16 @@
         }
         mysqli_free_result($result_all_users);
     } else {
-        $error_message .= " Erreur chargement tous utilisateurs: " . mysqli_error($conn);
+        $error_message .= " Erreur  " . mysqli_error($conn);
     }
 
-
-    // ______________/ Gestion des soumissions de formulaire \_____________________
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $action = $_POST['action'] ?? '';
 
-        mysqli_begin_transaction($conn); /// Début de la transaction pour les opérations groupées
+        mysqli_begin_transaction($conn); 
 
         try {
             switch ($action) {
-                // ... (Vos cas existants : add_personnel, add_laboratory, add_service, add_dispo) ...
-                // Assurez-vous que ces cas utilisent aussi mysqli et les transactions si nécessaire.
-                // Je vais me concentrer sur la conversion des cas de suppression.
-
                 case 'delete_account':
                     /// SUPPRIMER UN COMPTE UTILISATEUR
                     $user_id_to_delete = intval($_POST['user_id_to_delete'] ?? 0);
@@ -145,7 +122,6 @@
                     }
 
                     if (empty($form_errors['delete_account'])) {
-                        // 1. Récupérer le type de compte de l'utilisateur
                         $sql_type = "SELECT TypeCompte FROM utilisateurs WHERE ID = ?";
                         $stmt_type = mysqli_prepare($conn, $sql_type);
                         mysqli_stmt_bind_param($stmt_type, "i", $user_id_to_delete);
@@ -157,11 +133,10 @@
                         mysqli_stmt_close($stmt_type);
 
                         if (!$user_type_to_delete) {
-                             throw new Exception("Type de compte non trouvé pour l'utilisateur ID: " . $user_id_to_delete);
+                             throw new Exception("compte non trouvé pour l'utilisateur ID: " . $user_id_to_delete);
                         }
 
-                        // 2. Supprimer les entrées dépendantes
-                        if ($user_type_to_delete === 'Client') { // 'Client' avec C majuscule selon votre exemple
+                        if ($user_type_to_delete === 'Client') { //CAS POUR UN CLIENT
                             $stmt_del_rdv_client = mysqli_prepare($conn, "DELETE FROM rdv WHERE ID_Client = ?");
                             mysqli_stmt_bind_param($stmt_del_rdv_client, "i", $user_id_to_delete);
                             mysqli_stmt_execute($stmt_del_rdv_client);
@@ -171,7 +146,7 @@
                             mysqli_stmt_bind_param($stmt_del_client, "i", $user_id_to_delete);
                             mysqli_stmt_execute($stmt_del_client);
                             mysqli_stmt_close($stmt_del_client);
-                        } elseif ($user_type_to_delete === 'Personnel') {
+                        } elseif ($user_type_to_delete === 'Personnel') {//SI C EST POUR UN OPERSONEL
                             $stmt_del_rdv_personnel = mysqli_prepare($conn, "DELETE FROM rdv WHERE ID_Personnel = ?");
                             mysqli_stmt_bind_param($stmt_del_rdv_personnel, "i", $user_id_to_delete);
                             mysqli_stmt_execute($stmt_del_rdv_personnel);
@@ -191,22 +166,21 @@
                             mysqli_stmt_bind_param($stmt_del_personnel, "i", $user_id_to_delete);
                             mysqli_stmt_execute($stmt_del_personnel);
                             mysqli_stmt_close($stmt_del_personnel);
-                        } elseif ($user_type_to_delete === 'Admin') {
-                            mysqli_rollback($conn); // Annuler la transaction
-                            $error_message = "Impossible de supprimer un compte Administrateur via ce formulaire.";
+                        } elseif ($user_type_to_delete === 'Admin') {//CAS DE L ADMIN
+                            mysqli_rollback($conn); 
+                            $error_message = "Impossible de supprimer un compte Administrateur";
                             break;
                         }
 
-                        // 3. Supprimer l'entrée principale dans utilisateurs
                         $stmt_del_user = mysqli_prepare($conn, "DELETE FROM utilisateurs WHERE ID = ?");
                         mysqli_stmt_bind_param($stmt_del_user, "i", $user_id_to_delete);
                         mysqli_stmt_execute($stmt_del_user);
                         mysqli_stmt_close($stmt_del_user);
 
-                        $success_message = "Compte utilisateur supprimé avec succès.";
+                        $success_message = "Compte utilisateur supprimé ";
                     } else {
-                        $error_message = "Veuillez corriger les erreurs dans le formulaire 'Supprimer un compte'.";
-                        mysqli_rollback($conn); // Annuler si erreurs de validation
+                        $error_message = "ERREUR 'Supprimer un compte'.";
+                        mysqli_rollback($conn); 
                     }
                     break;
 
@@ -221,27 +195,27 @@
                     }
 
                     if (empty($form_errors['delete_professional'])) {
-                        // 1. Supprimer les RDV
+                        //SUPP LES RDV
                         $stmt_del_rdv = mysqli_prepare($conn, "DELETE FROM rdv WHERE ID_Personnel = ?");
                         mysqli_stmt_bind_param($stmt_del_rdv, "i", $personnel_id_to_delete);
                         mysqli_stmt_execute($stmt_del_rdv);
                         mysqli_stmt_close($stmt_del_rdv);
-                        // 2. Supprimer les dispo
+                        //SUPP LES DISPO
                         $stmt_del_dispo = mysqli_prepare($conn, "DELETE FROM dispo WHERE IdPersonnel = ?");
                         mysqli_stmt_bind_param($stmt_del_dispo, "i", $personnel_id_to_delete);
                         mysqli_stmt_execute($stmt_del_dispo);
                         mysqli_stmt_close($stmt_del_dispo);
-                        // 3. Supprimer le CV
+                        //SUPP LE CV DE LA PERSONNE
                         $stmt_del_cv = mysqli_prepare($conn, "DELETE FROM cv WHERE ID_Personnel = ?");
                         mysqli_stmt_bind_param($stmt_del_cv, "i", $personnel_id_to_delete);
                         mysqli_stmt_execute($stmt_del_cv);
                         mysqli_stmt_close($stmt_del_cv);
-                        // 4. Supprimer utilisateurs_personnel
+                        //SUPP UN PERSONNEL
                         $stmt_del_personnel_detail = mysqli_prepare($conn, "DELETE FROM utilisateurs_personnel WHERE ID = ?");
                         mysqli_stmt_bind_param($stmt_del_personnel_detail, "i", $personnel_id_to_delete);
                         mysqli_stmt_execute($stmt_del_personnel_detail);
                         mysqli_stmt_close($stmt_del_personnel_detail);
-                        // 5. Supprimer utilisateurs
+                        //SUPPRIMER UN UTILISATEUR
                         $stmt_del_user_main = mysqli_prepare($conn, "DELETE FROM utilisateurs WHERE ID = ?");
                         mysqli_stmt_bind_param($stmt_del_user_main, "i", $personnel_id_to_delete);
                         mysqli_stmt_execute($stmt_del_user_main);
@@ -263,8 +237,7 @@
                     }
 
                     if (empty($form_errors['delete_laboratory'])) {
-                        // 1. Récupérer tous les services associés
-                        $sql_get_services = "SELECT ID FROM service_labo WHERE ID_Laboratoire = ?";
+                        $sql_get_services = "SELECT ID FROM service_labo WHERE ID_Laboratoire = ?";//ON VA CHERCHER DANS LA BASE DE DONNE LEW SERVICES
                         $stmt_get_services = mysqli_prepare($conn, $sql_get_services);
                         mysqli_stmt_bind_param($stmt_get_services, "i", $labo_id_to_delete);
                         mysqli_stmt_execute($stmt_get_services);
@@ -276,8 +249,7 @@
                         mysqli_free_result($result_services_query);
                         mysqli_stmt_close($stmt_get_services);
 
-                        // 2. Pour chaque service, supprimer RDV et dispo
-                        if (!empty($service_ids)) {
+                        if (!empty($service_ids)) {//ON ENLEVE TOUT CE QUI VA AVEC 
                             $placeholders = implode(',', array_fill(0, count($service_ids), '?'));
                             $types = str_repeat('i', count($service_ids));
 
@@ -294,19 +266,17 @@
                             mysqli_stmt_close($stmt_del_dispo_services);
                         }
 
-                        // 3. Supprimer les services du laboratoire
-                        $stmt_del_services_labo = mysqli_prepare($conn, "DELETE FROM service_labo WHERE ID_Laboratoire = ?");
+                        $stmt_del_services_labo = mysqli_prepare($conn, "DELETE FROM service_labo WHERE ID_Laboratoire = ?");//SUPP UN SERVICE DU LABO
                         mysqli_stmt_bind_param($stmt_del_services_labo, "i", $labo_id_to_delete);
                         mysqli_stmt_execute($stmt_del_services_labo);
                         mysqli_stmt_close($stmt_del_services_labo);
 
-                        // 4. Supprimer le laboratoire
-                        $stmt_del_labo = mysqli_prepare($conn, "DELETE FROM laboratoire WHERE ID = ?");
+                        $stmt_del_labo = mysqli_prepare($conn, "DELETE FROM laboratoire WHERE ID = ?");//SUPP UN LABO
                         mysqli_stmt_bind_param($stmt_del_labo, "i", $labo_id_to_delete);
-                        mysqli_stmt_execute($stmt_del_labo);
+                        mysqli_stmt_execute($stmt_del_labo);//ON FAIT CE QUI EST DEMANDE
                         mysqli_stmt_close($stmt_del_labo);
 
-                        $success_message = "Laboratoire et tous ses services associés supprimés avec succès.";
+                        $success_message = "Laboratoire et tous ses services associés supprimés avec succès.";//PREVENIR
                     } else {
                         $error_message = "Veuillez corriger les erreurs dans le formulaire 'Supprimer un laboratoire'.";
                         mysqli_rollback($conn);
@@ -322,18 +292,15 @@
                     }
 
                     if (empty($form_errors['delete_service'])) {
-                        // 1. Supprimer RDV associés
-                        $stmt_del_rdv_service = mysqli_prepare($conn, "DELETE FROM rdv WHERE ID_ServiceLabo = ?");
+                        $stmt_del_rdv_service = mysqli_prepare($conn, "DELETE FROM rdv WHERE ID_ServiceLabo = ?");//ON ENLEVE LES RDV
                         mysqli_stmt_bind_param($stmt_del_rdv_service, "i", $service_id_to_delete);
                         mysqli_stmt_execute($stmt_del_rdv_service);
                         mysqli_stmt_close($stmt_del_rdv_service);
-                        // 2. Supprimer dispo associées
-                        $stmt_del_dispo_service = mysqli_prepare($conn, "DELETE FROM dispo WHERE IdServiceLabo = ?");
+                        $stmt_del_dispo_service = mysqli_prepare($conn, "DELETE FROM dispo WHERE IdServiceLabo = ?");//ON ENLEVE LES DISPO AUSIS
                         mysqli_stmt_bind_param($stmt_del_dispo_service, "i", $service_id_to_delete);
                         mysqli_stmt_execute($stmt_del_dispo_service);
                         mysqli_stmt_close($stmt_del_dispo_service);
-                        // 3. Supprimer le service
-                        $stmt_del_service = mysqli_prepare($conn, "DELETE FROM service_labo WHERE ID = ?");
+                        $stmt_del_service = mysqli_prepare($conn, "DELETE FROM service_labo WHERE ID = ?");//SUPP UN SERVICE QU ON VEUT PLUS
                         mysqli_stmt_bind_param($stmt_del_service, "i", $service_id_to_delete);
                         mysqli_stmt_execute($stmt_del_service);
                         mysqli_stmt_close($stmt_del_service);
@@ -353,79 +320,35 @@
                         $form_errors['delete_dispo']['dispo_id_to_delete'] = "Veuillez sélectionner un créneau de disponibilité à supprimer.";
                     }
 
-                    if (empty($form_errors['delete_dispo'])) {
-                        // 1. Supprimer le créneau
+                    if (empty($form_errors['delete_dispo'])) {// POUR ENLEVER LA DISPO
                         $stmt_del_dispo_single = mysqli_prepare($conn, "DELETE FROM dispo WHERE ID = ?");
                         mysqli_stmt_bind_param($stmt_del_dispo_single, "i", $dispo_id_to_delete);
                         mysqli_stmt_execute($stmt_del_dispo_single);
                         mysqli_stmt_close($stmt_del_dispo_single);
 
-                        $success_message = "Créneau de disponibilité supprimé avec succès.";
+                        $success_message = "Créneau de disponibilité supprimé ";//BIEN SUPPRIME
                     } else {
-                        $error_message = "Veuillez corriger les erreurs dans le formulaire 'Supprimer un créneau de disponibilité'.";
+                        $error_message = "ERREUR.";//MESSAGE
                         mysqli_rollback($conn);
                     }
                     break;
+            } 
 
-                // AJOUTER ICI LES AUTRES CAS 'add_personnel', 'add_laboratory', etc. en utilisant mysqli
-                // Exemple pour add_personnel (à compléter avec la validation et les autres champs)
-                /*
-                case 'add_personnel':
-                    // ... validation ...
-                    if (empty($form_errors['add_personnel'])) {
-                        // 1. Insérer dans 'utilisateurs'
-                        $hashed_password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Toujours hasher les mots de passe
-                        $sql_user = "INSERT INTO utilisateurs (Nom, Prenom, Email, MotDePasse, TypeCompte) VALUES (?, ?, ?, ?, 'Personnel')";
-                        $stmt_user = mysqli_prepare($conn, $sql_user);
-                        mysqli_stmt_bind_param($stmt_user, "ssss", $_POST['nom'], $_POST['prenom'], $_POST['email'], $hashed_password);
-                        mysqli_stmt_execute($stmt_user);
-                        $new_user_id = mysqli_insert_id($conn);
-                        mysqli_stmt_close($stmt_user);
+            mysqli_commit($conn); //ON LE FAIT
 
-                        // 2. Insérer dans 'utilisateurs_personnel'
-                        $sql_personnel_details = "INSERT INTO utilisateurs_personnel (ID, Type, Telephone, Description, AdresseLigne1, Ville, CodePostal, InfosComplementaires, PhotoProfil, VideoPresentation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                        $stmt_personnel_details = mysqli_prepare($conn, $sql_personnel_details);
-                        mysqli_stmt_bind_param($stmt_personnel_details, "isssssssss",
-                            $new_user_id, $_POST['specialite'], $_POST['telephone'], $_POST['description'],
-                            $_POST['adresse_ligne'], $_POST['ville'], $_POST['code_postal'], $_POST['infos_complementaires'],
-                            $_POST['photo_path'], $_POST['video_path']
-                        );
-                        mysqli_stmt_execute($stmt_personnel_details);
-                        mysqli_stmt_close($stmt_personnel_details);
-
-                        // 3. (Optionnel) Insérer dans 'cv' si description/specialite = CV
-                        // $sql_cv = "INSERT INTO cv (ID_Personnel, Specialite, Description) VALUES (?, ?, ?)"; // etc.
-
-                        $success_message = "Personnel ajouté avec succès.";
-                    } else {
-                        $error_message = "Erreur lors de l'ajout du personnel.";
-                        mysqli_rollback($conn);
-                    }
-                    break;
-                */
-
-            } // Fin du switch
-
-            mysqli_commit($conn); /// Valider la transaction si tout s'est bien passé
-
-            /// Recharger les listes si une action de suppression a eu lieu et a réussi
             if ($success_message && (strpos($action, 'delete_') === 0 || strpos($action, 'add_') === 0) ) { // Recharger après add_ aussi
-                // Recharger la liste du Personnel
-                $personnel_list = [];
+                $personnel_list = [];// LISTE DU PERSONNEL
                 $result_personnel = mysqli_query($conn, "SELECT u.ID, u.Nom, u.Prenom, up.Type FROM utilisateurs u JOIN utilisateurs_personnel up ON u.ID = up.ID ORDER BY u.Nom, u.Prenom");
                 if ($result_personnel) { while ($row = mysqli_fetch_assoc($result_personnel)) { $personnel_list[] = $row; } mysqli_free_result($result_personnel); }
 
-                // Recharger la liste des Laboratoires
-                $laboratories_list = [];
+                $laboratories_list = [];//LISTE DS LABO
                 $result_labs = mysqli_query($conn, "SELECT ID, Nom FROM laboratoire ORDER BY Nom");
                 if ($result_labs) { while ($row = mysqli_fetch_assoc($result_labs)) { $laboratories_list[] = $row; } mysqli_free_result($result_labs); }
 
-                // Recharger la liste des Services
                 $services_list = [];
                 $result_services = mysqli_query($conn, "SELECT sl.ID, sl.NomService, l.Nom AS LaboNom FROM service_labo sl JOIN laboratoire l ON sl.ID_Laboratoire = l.ID ORDER BY l.Nom, sl.NomService");
                 if ($result_services) { while ($row = mysqli_fetch_assoc($result_services)) { $services_list[] = $row; } mysqli_free_result($result_services); }
 
-                // Recharger la liste des Disponibilités
                 $dispo_list = [];
                 $sql_dispo_reload = "
                     SELECT d.ID, d.Date, d.HeureDebut, d.HeureFin, d.Prix,
@@ -442,42 +365,36 @@
                 $result_dispo = mysqli_query($conn, $sql_dispo_reload);
                 if ($result_dispo) { while ($row = mysqli_fetch_assoc($result_dispo)) { $dispo_list[] = $row; } mysqli_free_result($result_dispo); }
 
-                // Recharger la liste de TOUS les Utilisateurs
                 $all_users_list = [];
                 $result_all_users = mysqli_query($conn, "SELECT ID, Nom, Prenom, TypeCompte FROM utilisateurs ORDER BY Nom, Prenom");
                 if ($result_all_users) { while ($row = mysqli_fetch_assoc($result_all_users)) { $all_users_list[] = $row; } mysqli_free_result($result_all_users); }
 
-                $_POST = []; // Vider les données POST pour éviter la resoumission
+                $_POST = []; 
             }
 
         } catch (Exception $e) {
-            mysqli_rollback($conn); /// Annuler la transaction en cas d'erreur
+            mysqli_rollback($conn); 
             error_log($action . " a échoué: " . $e->getMessage() . " | MySQLi Error: " . mysqli_error($conn));
-            $error_message = "Une erreur est survenue lors de l'opération '" . $action . "': " . $e->getMessage();
+            $error_message = "Une erreur est survenue lors de l'opération '" . $action . "': " . $e->getMessage();//ON PREVIENT ERR4ERUES TROUVE
              if (mysqli_error($conn)) {
                 $error_message .= " (Détail BD: " . mysqli_error($conn) .")";
             }
         }
-    } // Fin de if ($_SERVER["REQUEST_METHOD"] == "POST")
+    } 
 
 ?>
 
-<!DOCTYPE html> <!-- ////////////////////////////////////////// HTML ///////////////////////////////////////////-->
+<!DOCTYPE html> 
 <html lang="fr">
-
-    <!-- Importation head -->
     <?php require 'includes/head.php'; ?>
 
 <body>
 
-    <!-- Importation header -->
-    <?php require 'includes/header.php'; ?>
+    <?php require 'includes/header.php'; ?><!--grader le haut de la page-->
 
     <main class="admin-main">
         <div class="admin-container">
             <h1 class="admin-title">Panneau d'Administration</h1>
-
-            <!-- Messages de succès ou d'erreur -->
             <?php if (!empty($success_message)): ?>
                 <div class="admin-alert success"><?= safe_html($success_message) ?></div>
             <?php endif; ?>
@@ -486,47 +403,47 @@
             <?php endif; ?>
 
 
-            <!-- ______________/ Section Ajouter un compte personnel \_____________________ -->
+            <!--ajouter un compte personnel-->
             <section class="admin-section">
                 <h2 class="section-title">Ajouter un compte personnel</h2>
                 <form action="admin_panel.php" method="POST" class="admin-form">
                     <input type="hidden" name="action" value="add_personnel">
 
                     <div class="form-group">
-                        <label for="nom">Nom :</label>
+                        <label for="nom">Nom :</label><!--pour indiquer le nom-->
                         <input type="text" id="nom" name="nom" value="<?= safe_html($_POST['nom'] ?? '') ?>" required>
                         <?php if (isset($form_errors['add_personnel']['nom'])) echo "<p class='error-message'>".safe_html($form_errors['add_personnel']['nom'])."</p>"; ?>
                     </div>
                     <div class="form-group">
-                        <label for="prenom">Prénom :</label>
+                        <label for="prenom">Prénom :</label><!--pour indiquer le prenom-->
                         <input type="text" id="prenom" name="prenom" value="<?= safe_html($_POST['prenom'] ?? '') ?>" required>
                         <?php if (isset($form_errors['add_personnel']['prenom'])) echo "<p class='error-message'>".safe_html($form_errors['add_personnel']['prenom'])."</p>"; ?>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email :</label>
+                        <label for="email">Email :</label><!--pour indiquer le mail-->
                         <input type="email" id="email" name="email" value="<?= safe_html($_POST['email'] ?? '') ?>" required>
                         <?php if (isset($form_errors['add_personnel']['email'])) echo "<p class='error-message'>".safe_html($form_errors['add_personnel']['email'])."</p>"; ?>
                     </div>
                     <div class="form-group">
-                        <label for="password">Mot de passe :</label>
+                        <label for="password">Mot de passe :</label><!--pour indiquer le mdp-->
                         <input type="password" id="password" name="password" required>
                         <?php if (isset($form_errors['add_personnel']['password'])) echo "<p class='error-message'>".safe_html($form_errors['add_personnel']['password'])."</p>"; ?>
                     </div>
                     <div class="form-group">
-                        <label for="telephone">Téléphone :</label>
+                        <label for="telephone">Téléphone :</label><!--pour indiquer le num de tel-->
                         <input type="tel" id="telephone" name="telephone" value="<?= safe_html($_POST['telephone'] ?? '') ?>" required pattern="^0[67]\d{8}$" title="Ex: 0612345678">
                         <?php if (isset($form_errors['add_personnel']['telephone'])) echo "<p class='error-message'>".safe_html($form_errors['add_personnel']['telephone'])."</p>"; ?>
                     </div>
                     <div class="form-group">
-                        <label for="specialite">Spécialité/Type (ex: Généraliste, Cardiologue) :</label>
+                        <label for="specialite">Spécialité (ex: Généraliste, Cardiologue) :</label><!--pour indiquer la specialite-->
                         <input type="text" id="specialite" name="specialite" value="<?= safe_html($_POST['specialite'] ?? '') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="description_personnel">Description (CV, etc.) :</label>
+                        <label for="description_personnel">Description (CV, etc.) :</label><!--pour indiquer la description-->
                         <textarea id="description_personnel" name="description"><?= safe_html($_POST['description'] ?? '') ?></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="adresse_ligne_personnel">Adresse (N° et Rue) :</label>
+                        <label for="adresse_ligne_personnel">Adresse (N° et Rue) :</label><!--pour indiquer l adresse-->
                         <input type="text" id="adresse_ligne_personnel" name="adresse_ligne" value="<?= safe_html($_POST['adresse_ligne'] ?? '') ?>" required>
                         <?php if (isset($form_errors['add_personnel']['adresse_ligne'])) echo "<p class='error-message'>".safe_html($form_errors['add_personnel']['adresse_ligne'])."</p>"; ?>
                     </div>
@@ -557,7 +474,7 @@
             </section>
 
 
-            <!-- ______________/ Section Ajouter un laboratoire \_____________________ -->
+            <!-- ajouter un labo-->
             <section class="admin-section">
                 <h2 class="section-title">Ajouter un laboratoire</h2>
                 <form action="admin_panel.php" method="POST" class="admin-form">
@@ -610,7 +527,7 @@
             </section>
 
 
-            <!-- ______________/ Section Ajouter un service à un laboratoire \_____________________ -->
+            <!-- Ajouter un service à un laboratoire -->
             <section class="admin-section">
                 <h2 class="section-title">Ajouter un service et l'associer à un laboratoire</h2>
                 <form action="admin_panel.php" method="POST" class="admin-form">
@@ -647,7 +564,6 @@
             </section>
 
 
-            <!-- ______________/ Section Ajouter un créneau de disponibilité \_____________________ -->
             <section class="admin-section">
                 <h2 class="section-title">Ajouter un créneau de disponibilité</h2>
                 <form action="admin_panel.php" method="POST" class="admin-form">
@@ -679,7 +595,6 @@
                         <select id="labo_service_id_dispo" name="target_id_labo_service"> <!-- Changed name -->
                             <option value="">-- Choisir un service de laboratoire --</option>
                             <?php
-                            /// Récupération des services pour le dropdown des dispos (déjà fait en haut, mais on peut le refaire ici si besoin de fraîcheur)
                             $sql_lab_services_dispo = "SELECT sl.ID, sl.NomService, l.Nom AS LaboNom FROM service_labo sl JOIN laboratoire l ON sl.ID_Laboratoire = l.ID ORDER BY l.Nom, sl.NomService";
                             $result_lab_services_dispo = mysqli_query($conn, $sql_lab_services_dispo);
                             if ($result_lab_services_dispo) {
@@ -724,12 +639,10 @@
             </section>
 
 
-            <!-- ______________/ Section Supprimer des entités \_____________________ -->
             <section class="admin-section delete-section">
                 <h2 class="section-title delete-title">Supprimer des entités</h2>
 
-                <!-- Formulaire de suppression de Compte Utilisateur -->
-                <h3 class="subsection-title">Supprimer un Compte Utilisateur (Client ou Personnel)</h3>
+                <h3 class="subsection-title">Supprimer un Compte Utilisateur (Client ou Personnel)</h3><!--pour sup un utilisateur-->
                 <form action="admin_panel.php" method="POST" class="admin-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte utilisateur et toutes ses données associées (RDV, créneaux, CV etc.)? Cette action est irréversible.');">
                     <input type="hidden" name="action" value="delete_account">
                     <div class="form-group">
@@ -750,8 +663,7 @@
 
                 <hr class="form-separator">
 
-                <!-- Formulaire de suppression de Personnel -->
-                <h3 class="subsection-title">Supprimer un Professionnel de Santé</h3>
+                <h3 class="subsection-title">Supprimer un Professionnel de Santé</h3><!--pour sup un personnel-->
                 <form action="admin_panel.php" method="POST" class="admin-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce professionnel de santé, son compte utilisateur, ses RDV et créneaux ? Cette action est irréversible.');">
                     <input type="hidden" name="action" value="delete_professional">
                     <div class="form-group">
@@ -772,8 +684,7 @@
 
                 <hr class="form-separator">
 
-                <!-- Formulaire de suppression de Laboratoire -->
-                <h3 class="subsection-title">Supprimer un Laboratoire</h3>
+                <h3 class="subsection-title">Supprimer un Laboratoire</h3><!--pour sup un labo-->
                 <form action="admin_panel.php" method="POST" class="admin-form" onsubmit="return confirm('ATTENTION : La suppression d\'un laboratoire supprimera TOUS les services et créneaux/RDV associés à ce laboratoire. Êtes-vous sûr ? Cette action est irréversible.');">
                     <input type="hidden" name="action" value="delete_laboratory">
                     <div class="form-group">
@@ -793,8 +704,7 @@
 
                 <hr class="form-separator">
 
-                <!-- Formulaire de suppression de Service de Laboratoire -->
-                <h3 class="subsection-title">Supprimer un Service de Laboratoire</h3>
+                <h3 class="subsection-title">Supprimer un Service de Laboratoire</h3><!--pour sup un service de labo-->
                 <form action="admin_panel.php" method="POST" class="admin-form" onsubmit="return confirm('ATTENTION : La suppression de ce service supprimera TOUS les créneaux et RDV associés à ce service. Êtes-vous sûr ? Cette action est irréversible.');">
                     <input type="hidden" name="action" value="delete_service">
                     <div class="form-group">
@@ -814,8 +724,7 @@
 
                 <hr class="form-separator">
 
-                <!-- Formulaire de suppression de Créneau de Disponibilité -->
-                <h3 class="subsection-title">Supprimer un Créneau de Disponibilité</h3>
+                <h3 class="subsection-title">Supprimer un Créneau de Disponibilité</h3><!--pour sup un créneau-->
                 <form action="admin_panel.php" method="POST" class="admin-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce créneau de disponibilité ?');">
                     <input type="hidden" name="action" value="delete_dispo">
                     <div class="form-group">
@@ -837,11 +746,9 @@
         </div>
     </main>
 
-    <!-- Importation footer -->
     <?php require 'includes/footer.php'; ?>
 
     <script>
-        // ______________/ JavaScript pour affichage conditionnel \_____________________
         function toggleDispoTarget() {
             const dispoTypePersonnel = document.getElementById('dispo_type_personnel');
             const dispoTypeLaboratoire = document.getElementById('dispo_type_laboratoire');
@@ -853,18 +760,18 @@
             if (dispoTypePersonnel.checked) {
                 personnelGroup.style.display = 'block';
                 laboServiceGroup.style.display = 'none';
-                personnelSelect.setAttribute('name', 'target_id'); // Le nom 'target_id' sera utilisé pour le personnel
+                personnelSelect.setAttribute('name', 'target_id'); 
                 laboServiceSelect.removeAttribute('name');
                 personnelSelect.required = true;
                 laboServiceSelect.required = false;
             } else if (dispoTypeLaboratoire.checked) {
                 personnelGroup.style.display = 'none';
                 laboServiceGroup.style.display = 'block';
-                laboServiceSelect.setAttribute('name', 'target_id'); // Le nom 'target_id' sera utilisé pour le service labo
+                laboServiceSelect.setAttribute('name', 'target_id'); 
                 personnelSelect.removeAttribute('name');
                 personnelSelect.required = false;
                 laboServiceSelect.required = true;
-            } else { // Au cas où aucun n'est coché (ne devrait pas arriver avec des radios bien configurés)
+            } else { 
                 personnelGroup.style.display = 'none';
                 laboServiceGroup.style.display = 'none';
                 personnelSelect.removeAttribute('name');
@@ -874,21 +781,19 @@
             }
         }
 
-        /// Appel initial au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
-            toggleDispoTarget(); // Assurer l'état correct au chargement
+            toggleDispoTarget(); 
         });
     </script>
 
     <style>
-    /* ______________/ Styles CSS (identiques à l'original) \_____________________ */
     .admin-main {
         padding: 2rem;
         background-color: #f2f2f2;
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        min-height: calc(100vh - 160px); /* Ajuster si header/footer ont des hauteurs différentes */
+        min-height: calc(100vh - 160px);
     }
 
     .admin-container {
@@ -904,14 +809,14 @@
 
     .admin-title {
         text-align: center;
-        color: #0a7abf; /* Bleu Omnes Santé */
+        color:rgb(10, 122, 191); 
         margin-bottom: 2.5rem;
         font-size: 2.5rem;
         font-weight: 700;
     }
 
     .admin-section {
-        background-color: #f8f9fa;
+        background-color:rgb(248, 249, 250);
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         padding: 1.5rem;
@@ -919,12 +824,12 @@
     }
 
     .section-title {
-        color: #0a7abf;
+        color:rgb(10, 122, 191);
         font-size: 1.8rem;
         margin-top: 0;
         margin-bottom: 1.5rem;
         padding-bottom: 0.8rem;
-        border-bottom: 2px solid #eaf5ff; /* Bleu très clair */
+        border-bottom: 2px solid #eaf5ff;
         text-align: center;
     }
 
@@ -987,20 +892,19 @@
     }
 
     .btn-add {
-        background-color: #28a745; /* Vert */
+        background-color:rgb(40, 167, 69);
     }
     .btn-add:hover {
-        background-color: #218838;
+        background-color:rgb(33, 136, 56);
         transform: translateY(-2px);
     }
 
     .error-message {
-        color: #dc3545; /* Rouge erreur */
+        color:rgb(220, 53, 69);
         font-size: 0.85em;
         margin-top: 5px;
     }
 
-    /* Alert styles */
     .admin-alert {
         padding: 15px;
         margin-bottom: 20px;
@@ -1009,46 +913,44 @@
         font-weight: 500;
     }
     .admin-alert.success {
-        background-color: #d4edda; /* Vert clair */
-        color: #155724; /* Vert foncé */
-        border: 1px solid #c3e6cb;
+        background-color:rgb(212, 237, 218); 
+        color:rgb(21, 87, 36); 
+        border: 1px solidrgb(195, 230, 203);
     }
     .admin-alert.error {
-        background-color: #f8d7da; /* Rouge clair */
-        color: #721c24; /* Rouge foncé */
-        border: 1px solid #f5c6cb;
+        background-color: #f8d7da; 
+        color:rgb(114, 28, 36); 
+        border: 1px solidrgb(245, 198, 203);
     }
 
-    /* Radio button specific style */
     .admin-form input[type="radio"] {
-        width: auto; /* Override 100% width */
+        width: auto;
         margin-right: 0.5em;
     }
     .admin-form label[for="dispo_type_personnel"],
     .admin-form label[for="dispo_type_laboratoire"] {
-        display: inline-block; /* Pour aligner avec le radio */
+        display: inline-block;
         margin-right: 1.5em;
-        font-weight: normal; /* Moins gras que les labels de champs */
+        font-weight: normal; 
     }
 
-    /* Styles pour la section de suppression */
     .delete-section {
-        background-color: #ffebeb; /* Rose très clair pour la suppression */
-        border-color: #ffc2c2; /* Bordure rouge clair */
-    }
+        background-color: #ffebeb; 
+        border-color:rgb(255, 194, 194); 
+    }rgb(255, 194, 194)
 
     .section-title.delete-title {
-        color: #dc3545; /* Rouge pour le titre de la section de suppression */
-        border-bottom: 2px solid #ffc2c2; /* Rouge très clair */
+        color:rgb(220, 53, 69); 
+        border-bottom: 2px solidrgb(255, 194, 194);
     }
 
     .subsection-title {
-        color: #c82333; /* Rouge un peu plus foncé pour les sous-titres */
+        color:rgb(200, 35, 51);
         font-size: 1.25rem;
         margin-top: 1.5rem;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 1px dashed #ffc2c2; /* Rouge très clair */
+        border-bottom: 1px dashed #ffc2c2;
     }
 
     .form-separator {
@@ -1059,11 +961,11 @@
     }
 
     .btn-delete {
-        background-color: #dc3545; /* Bouton rouge pour la suppression */
+        background-color: #dc3545; 
     }
 
     .btn-delete:hover {
-        background-color: #c82333; /* Rouge plus foncé au survol */
+        background-color: #c82333;
         transform: translateY(-2px);
     }
 
@@ -1071,7 +973,6 @@
 </body>
 </html>
 <?php
-    /// Fermeture de la connexion MySQLi à la toute fin
     if (isset($conn)) {
         mysqli_close($conn);
     }

@@ -1,9 +1,7 @@
 <?php
-// On place les includes qui pourraient démarrer une session AVANT tout code HTML.
 require 'includes/head.php';
 require 'includes/header.php';
 
-// S'assurer que l'utilisateur est connecté pour prendre RDV
 $user_is_logged_in = isset($_SESSION["user_id"]);
 
 function safe_html($value) {
@@ -16,7 +14,6 @@ if ($conn->connect_error) {
 }
 $conn->set_charset("utf8");
 
-// 1. Récupérer la liste unique des spécialités pour le filtre
 $sqlSpecialitesUniques = "SELECT DISTINCT p.Type 
                           FROM utilisateurs_personnel p 
                           WHERE p.Type IS NOT NULL AND LOWER(p.Type) != 'generaliste' 
@@ -29,29 +26,25 @@ if ($resultSpecialitesUniques && $resultSpecialitesUniques->num_rows > 0) {
     }
 }
 
-// 2. Récupérer tous les médecins spécialistes
 $sqlMedecins = "SELECT u.ID, u.Nom, u.Prenom, u.Email,
                        p.Photo, p.Telephone, p.Type AS Specialite,
                        a.Adresse, a.Ville, a.CodePostal
                 FROM utilisateurs_personnel p
                 LEFT JOIN utilisateurs u ON p.ID = u.ID
                 LEFT JOIN adresse a ON p.ID_Adresse = a.ID
-                WHERE p.Type IS NOT NULL AND LOWER(p.Type) != 'generaliste'";
+                WHERE p.Type IS NOT NULL AND LOWER(p.Type) != 'generaliste'";//ON RECUP AVEC LA BASE DE DONNE LES INFO
 
 $resultMedecins = $conn->query($sqlMedecins);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <?php // Le head.php est déjà inclus plus haut ?>
     <style>
-        /* ========================================================= */
-        /* STYLES SPÉCIFIQUES POUR LA PAGE DES MÉDECINS (v4 de ton fichier original)      */
-        /* ========================================================= */
+        
 
-        .main-specialistes { /* J'utilise le nom de classe original .main-specialistes */
+        .main-specialistes { 
             padding: 2rem;
-            background-color: #f2f2f2;
+            background-color:rgb(242, 242, 242);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -60,14 +53,13 @@ $resultMedecins = $conn->query($sqlMedecins);
         
         .main-specialistes h1 {
             color: #333;
-            margin-bottom: 1rem; /* Un peu moins pour le filtre */
+            margin-bottom: 1rem; 
         }
 
-        /* NOUVEAUX STYLES POUR LE FILTRE DE SPÉCIALITÉS (conçus pour être moins invasifs) */
         .specialty-filter-section {
             width: 100%;
-            max-width: 900px; /* Cohérent avec doctor-card */
-            margin-bottom: 2rem; /* Espace avant la liste des médecins */
+            max-width: 900px; 
+            margin-bottom: 2rem; 
             background-color: #fff;
             padding: 1rem 1.5rem;
             border-radius: 8px;
@@ -76,13 +68,13 @@ $resultMedecins = $conn->query($sqlMedecins);
         .specialty-filter-section h3 {
             margin-top: 0;
             margin-bottom: 1rem;
-            color: #0a7abf;
+            color:rgb(10, 122, 191);
             font-size: 1.2rem;
             text-align: center;
         }
-        .specialty-options-grid { /* Utilisation d'une grille pour les options */
+        .specialty-options-grid { 
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Colonnes responsives */
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 0.75rem;
         }
         .specialty-options-grid label {
@@ -91,40 +83,39 @@ $resultMedecins = $conn->query($sqlMedecins);
             cursor: pointer;
             font-size: 0.9rem;
             color: #333;
-            background-color: #f8f9fa;
+            background-color:rgb(236, 240, 244);
             padding: 8px 12px;
-            border-radius: 5px; /* Moins arrondi que "pilule" */
-            border: 1px solid #dee2e6;
+            border-radius: 5px; 
+            border: 1px solidrgb(222, 226, 230);
             transition: background-color 0.2s, border-color 0.2s;
             box-sizing: border-box;
         }
         .specialty-options-grid input[type="checkbox"] {
             margin-right: 0.5rem;
-            accent-color: #0a7abf;
+            accent-color:rgb(10, 122, 191);
             width: 15px;
             height: 15px;
         }
         .specialty-options-grid label:hover {
-            background-color: #e9ecef;
+            background-color:rgb(233, 236, 239);
             border-color: #adb5bd;
         }
         .specialty-options-grid label.checked-label {
-            background-color: #d1e7ff; /* Bleu plus clair pour sélection */
-            color: #004085; /* Texte plus foncé */
-            border-color: #b8daff;
+            background-color:rgb(209, 231, 255); 
+            color:rgb(0, 64, 133); 
+            border-color:rgb(184, 218, 255);
             font-weight: 500;
         }
 
-        /* STYLES ORIGINAUX POUR DOCTOR-CARD et ses enfants */
         .doctor-card {
-            background-color: #ffffff;
-            border: 1px solid #e0e0e0;
+            background-color:rgb(245, 240, 240);
+            border: 1px solidrgb(224, 224, 224);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             width: 100%;
             max-width: 900px;
             padding: 1.5rem;
-            display: flex; /* Affiché par défaut */
+            display: flex; 
             flex-direction: column;
             gap: 1.5rem;
         }
@@ -140,8 +131,8 @@ $resultMedecins = $conn->query($sqlMedecins);
         .doctor-photo {
             width: 170px;
             height: 220px; 
-            border: 1px solid #e0e0e0;
-            background-color: #f8f8f8;
+            border: 1px solidrgb(224, 224, 224);
+            background-color:rgb(237, 234, 234);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -165,10 +156,10 @@ $resultMedecins = $conn->query($sqlMedecins);
             font-size: 1.5rem;
             font-weight: 600;
             color: #333;
-            background-color: #eaf5ff;
+            background-color:rgb(234, 245, 255);
             padding: 12px;
             border-radius: 6px;
-            margin: 0; /* Reset marge du h3 ici */
+            margin: 0; 
         }
         .info-grid {
             display: grid;
@@ -180,8 +171,7 @@ $resultMedecins = $conn->query($sqlMedecins);
         .full-width { grid-column: 1 / -1; }
         .info-cell strong { font-weight: 500; color: #333; }
         
-        /* STYLES CALENDRIER (inchangés par rapport à la version précédente) */
-        .calendar-container { margin-top: 1rem; } /* Pour espacer du bloc info */
+        .calendar-container { margin-top: 1rem; } 
         .calendar-controls {
             display: flex;
             justify-content: space-between;
@@ -189,7 +179,7 @@ $resultMedecins = $conn->query($sqlMedecins);
             margin-bottom: 10px;
         }
         .calendar-controls button {
-            background-color: #0a7abf;
+            background-color:rgb(10, 122, 191);
             color: white;
             border: none;
             padding: 8px 12px;
@@ -202,42 +192,41 @@ $resultMedecins = $conn->query($sqlMedecins);
         }
         .week-display {
             font-weight: bold;
-            color: #0a7abf;
+            color:rgb(10, 122, 191);
         }
         .availability-grid {
             width: 100%;
             border-collapse: collapse;
             text-align: center;
             table-layout: fixed; 
-            /* margin-top: 1rem; Déjà géré par .calendar-container */
         }
         .availability-grid th {
-            background-color: #4a6fa5;
+            background-color:rgb(74, 111, 165);
             color: white;
-            padding: 10px 5px; /* Padding réduit */
+            padding: 10px 5px; 
             font-weight: 500;
-            font-size: 0.85rem; /* Taille police réduite */
+            font-size: 0.85rem;
         }
         .availability-grid td {
-            border: 1px solid #e0e0e0;
-            padding: 2px; /* Léger padding pour espacer les boutons */
+            border: 1px solidrgb(223, 216, 216);
+            padding: 2px; 
             color: #555;
-            height: auto; /* Hauteur auto pour s'adapter au contenu */
-            vertical-align: top; /* Aligner les boutons en haut */
+            height: auto; 
+            vertical-align: top; 
         }
-        .availability-grid td:empty { /* Cache les cellules vides si aucun créneau à cette heure ce jour-là */
-            border: 1px solid transparent; /* Rend la bordure invisible mais garde l'espace */
-            background-color: #f9f9f9; /* Un fond discret */
+        .availability-grid td:empty { 
+            border: 1px solid transparent; 
+            background-color:rgb(249, 249, 249);
         }
         .time-slot-button {
             display: block;
             width: 100%;
             padding: 6px 4px;
-            margin-bottom: 2px; /* Espace entre boutons si plusieurs dans une cellule (ne devrait pas arriver ici) */
-            border: 1px solid #bde0fe;
+            margin-bottom: 2px; 
+            border: 1px solidrgb(189, 224, 254);
             border-radius: 4px;
-            background-color: #e6ffed; /* Vert clair pour dispo */
-            color: #155724; /* Vert foncé pour le texte */
+            background-color:rgb(230, 255, 237); 
+            color:rgb(21, 87, 36); 
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: bold;
@@ -251,33 +240,30 @@ $resultMedecins = $conn->query($sqlMedecins);
             color: #555;
         }
         .time-slot-button.selected {
-            background-color: #28a745 !important; /* Vert pour sélectionné */
+            background-color:rgb(40, 167, 69) !important; 
             color: white !important;
-            border-color: #1c7430;
+            border-color:rgb(28, 116, 48);
         }
         .time-slot-button.selected .slot-price {
-            color: #f0f0f0;
+            color:rgb(240, 240, 240);
         }
         .time-slot-button:hover:not(.selected) {
-            background-color: #d4f8e0;
-            border-color: #a3e9b9;
+            background-color:rgb(212, 248, 224);
+            border-color:rgb(163, 233, 185);
         }
-        /* Style pour les créneaux passés (NON CLICABLES) */
         .time-slot-button.past-slot {
-            background-color: #e9ecef !important; /* Gris très clair */
-            color: #6c757d !important; /* Texte gris foncé */
-            border-color: #ced4da !important; /* Bordure grise */
-            cursor: not-allowed !important; /* Curseur "interdit" */
-            opacity: 0.7; /* Légèrement transparent */
-            text-decoration: line-through; /* Optionnel: barre le texte pour plus de clarté */
-            pointer-events: none; /* Empêche tout événement de souris (clic, survol) */
-            box-shadow: none; /* Pas d'ombre portée */
+            background-color:rgb(233, 236, 239) !important; 
+            color:rgb(108, 117, 125) !important; 
+            border-color:rgb(206, 212, 218) !important; 
+            cursor: not-allowed !important; 
+            opacity: 0.7;
+            text-decoration: line-through; 
+            pointer-events: none; 
+            box-shadow: none; 
         }
-        /* Assurez-vous que le prix dans le créneau passé est aussi grisé */
         .time-slot-button.past-slot .slot-price {
-            color: #888 !important; /* Une nuance de gris plus foncée pour le prix */
+            color: #888 !important; 
         }
-        /* Style pour les boutons désactivés en général (si déjà présent ailleurs, ajuster la spécificité) */
         .time-slot-button:disabled { 
              background-color: #ccc;
              cursor: not-allowed;
@@ -285,7 +271,6 @@ $resultMedecins = $conn->query($sqlMedecins);
              color: #666;
         }
         
-        /* ACTIONS CONTAINER (inchangés) */
         .actions-container {
             display: flex;
             justify-content: flex-end;
@@ -304,25 +289,24 @@ $resultMedecins = $conn->query($sqlMedecins);
             transition: opacity 0.3s ease;
         }
         .btn-action:hover { opacity: 0.85; }
-        .btn-rdv { background-color: #6c757d; } 
-        .btn-rdv.active { background-color: #28a745; }
+        .btn-rdv { background-color:rgb(108, 117, 125); } 
+        .btn-rdv.active { background-color:rgb(40, 167, 69); }
         .btn-rdv:disabled {
             background-color: #ccc;
             cursor: not-allowed;
             opacity: 0.7;
         }
-        .btn-communiquer { background-color: #5dade2; }
-        .btn-cv { background-color: #4a6fa5; }
+        .btn-communiquer { background-color:rgb(93, 173, 226); }
+        .btn-cv { background-color:rgb(74, 111, 165); }
     </style>
 </head>
 <body>
 
-<main class="main-specialistes"> <!-- Classe principale originale -->
+<main class="main-specialistes"> 
     <h1>Nos Médecins Spécialistes</h1>
 
-    <!-- SECTION DU FILTRE -->
     <?php if (!empty($specialites_disponibles)): ?>
-    <section class="specialty-filter-section"> <!-- Utilisation de <section> pour le bloc filtre -->
+    <section class="specialty-filter-section"> 
         <h3>Filtrer par spécialité :</h3>
         <div class="specialty-options-grid" id="specialty-filter-options-container">
             <?php foreach ($specialites_disponibles as $spec): ?>
@@ -334,19 +318,16 @@ $resultMedecins = $conn->query($sqlMedecins);
         </div>
     </section>
     <?php endif; ?>
-    <!-- FIN SECTION DU FILTRE -->
-
-    <!-- Les cartes de médecins sont générées ici, sans conteneur supplémentaire pour ne pas casser le layout -->
     <?php
     if ($resultMedecins && $resultMedecins->num_rows > 0) {
         while ($medecin = $resultMedecins->fetch_assoc()) {
-            $idMedecin = safe_html($medecin['ID']);
+            $idMedecin = safe_html($medecin['ID']);//REGADER AVEC BASE DE DONNE ID
             $specialite = safe_html($medecin['Specialite']);
-            $adresse_complete = safe_html($medecin['Adresse']) . ', ' . safe_html($medecin['CodePostal']) . ' ' . safe_html($medecin['Ville']);
+            $adresse_complete = safe_html($medecin['Adresse']) . ', ' . safe_html($medecin['CodePostal']) . ' ' . safe_html($medecin['Ville']);//PAREIL POUR ADRESSE
             ?>
             <div class="doctor-card" id="doctor-<?php echo $idMedecin; ?>" data-specialite="<?php echo $specialite; ?>">
                 <div class="doctor-header">
-                    <div class="doctor-photo">
+                    <div class="doctor-photo"><!--pour photo du medecin-->
                         <?php if (!empty($medecin['Photo'])): ?>
                             <img src="<?php echo safe_html($medecin['Photo']); ?>" alt="Photo de <?php echo safe_html($medecin['Prenom']); ?>">
                         <?php else: ?>
@@ -354,7 +335,7 @@ $resultMedecins = $conn->query($sqlMedecins);
                         <?php endif; ?>
                     </div>
                     <div class="doctor-details">
-                        <h3 class="specialite-title">Spécialiste - <?php echo $specialite; ?></h3>
+                        <h3 class="specialite-title">Spécialiste - <?php echo $specialite; ?></h3><!--pour information du specialistet-->
                         <div class="info-grid">
                             <div class="info-cell"><strong>Nom :</strong> <?php echo safe_html($medecin['Nom']); ?></div>
                             <div class="info-cell"><strong>Prénom :</strong> <?php echo safe_html($medecin['Prenom']); ?></div>
@@ -365,17 +346,17 @@ $resultMedecins = $conn->query($sqlMedecins);
                     </div>
                 </div>
 
-                <div class="calendar-container"> <!-- Conteneur pour le calendrier et ses contrôles -->
+                <div class="calendar-container"> 
                     <div class="calendar-controls">
-                        <button class="prev-week" data-medecin-id="<?php echo $idMedecin; ?>">< Sem. Prec.</button>
+                        <button class="prev-week" data-medecin-id="<?php echo $idMedecin; ?>">< Sem. Prec.</button><!--bouton pour avant-->
                         <span class="week-display" id="week-display-<?php echo $idMedecin; ?>">Chargement...</span>
-                        <button class="next-week" data-medecin-id="<?php echo $idMedecin; ?>">Sem. Suiv. ></button>
+                        <button class="next-week" data-medecin-id="<?php echo $idMedecin; ?>">Sem. Suiv. ></button><!--bouron pour apres-->
                     </div>
                     <table class="availability-grid" id="calendar-<?php echo $idMedecin; ?>">
                         <thead>
                             <tr>
                                 <th style="width: 15%;">Heure</th>
-                                <th style="width: 12.14%;">Lun</th><th style="width: 12.14%;">Mar</th><th style="width: 12.14%;">Mer</th>
+                                <th style="width: 12.14%;">Lun</th><th style="width: 12.14%;">Mar</th><th style="width: 12.14%;">Mer</th><!--pour comment marqueer jour semaien-->
                                 <th style="width: 12.14%;">Jeu</th><th style="width: 12.14%;">Ven</th><th style="width: 12.14%;">Sam</th>
                                 <th style="width: 12.14%;">Dim</th>
                             </tr>
@@ -384,7 +365,7 @@ $resultMedecins = $conn->query($sqlMedecins);
                     </table>
                 </div>
 
-                <form action="confirmation_paiement.php" method="POST" class="rdv-form" id="form-<?php echo $idMedecin; ?>">
+                <form action="confirmation_paiement.php" method="POST" class="rdv-form" id="form-<?php echo $idMedecin; ?>"><!--pour faire le paiement-->
                     <input type="hidden" name="medecin_id" value="<?php echo $idMedecin; ?>">
                     <input type="hidden" name="medecin_nom" value="<?php echo safe_html($medecin['Nom'] . ' ' . $medecin['Prenom']); ?>">
                     <input type="hidden" name="medecin_specialite" value="<?php echo $specialite; ?>">
@@ -396,9 +377,9 @@ $resultMedecins = $conn->query($sqlMedecins);
                     
                     <div class="actions-container">
                         <?php if ($user_is_logged_in): ?>
-                            <button type="submit" class="btn-action btn-rdv" id="btn-rdv-<?php echo $idMedecin; ?>" disabled>Choisir un créneau</button>
+                            <button type="submit" class="btn-action btn-rdv" id="btn-rdv-<?php echo $idMedecin; ?>" disabled>Choisir un créneau</button><!--BOUTON POUR PREDNRE SON RDVt-->
                         <?php else: ?>
-                            <a href="login.php?redirect=medecins_special.php" class="btn-action btn-rdv" style="background-color:#007bff;">Se connecter pour prendre RDV</a>
+                            <a href="login.php?redirect=medecins_special.php" class="btn-action btn-rdv" style="background-color:#007bff;">Se connecter pour prendre RDV</a><!--INFORMER QUE CREZTIOJ COPTE-->
                         <?php endif; ?>
                         <a href="chat.php?target_id=<?php echo $idMedecin; ?>" class="btn-action btn-communiquer">Communiquer</a>
                         <a href="cv_medecin.php?id=<?php echo $idMedecin; ?>" class="btn-action btn-cv">Voir CV</a>
@@ -408,7 +389,7 @@ $resultMedecins = $conn->query($sqlMedecins);
             <?php
         }
     } else {
-        echo "<p>Aucun médecin spécialiste trouvé.</p>";
+        echo "<p>Aucun médecin spécialiste trouvé.</p>";//PREVENIR ERREUR
     }
     $conn->close();
     ?>
@@ -418,19 +399,16 @@ $resultMedecins = $conn->query($sqlMedecins);
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- GESTION DU FILTRE DE SPÉCIALITÉS ---
     const filterCheckboxesContainer = document.getElementById('specialty-filter-options-container');
-    // Cibler les cartes directement sous .main-specialistes, car on a enlevé le conteneur intermédiaire.
     const allDoctorCards = Array.from(document.querySelectorAll('.main-specialistes > .doctor-card'));
 
 
     function applySpecialtyFilter() {
-        if (!filterCheckboxesContainer) return; // Si pas de filtre, ne rien faire
+        if (!filterCheckboxesContainer) return; 
 
         const selectedSpecialties = Array.from(filterCheckboxesContainer.querySelectorAll('.specialty-checkbox-input:checked'))
             .map(cb => cb.value);
 
-        // Mettre à jour le style des labels
         filterCheckboxesContainer.querySelectorAll('label').forEach(label => {
             const checkbox = label.querySelector('.specialty-checkbox-input');
             if (checkbox && checkbox.checked) {
@@ -441,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         allDoctorCards.forEach(card => {
-            const cardSpecialty = card.dataset.specialite;
+            const cardSpecialty = card.dataset.specialite;//POUR LA SPECIALITE
             if (selectedSpecialties.length === 0 || selectedSpecialties.includes(cardSpecialty)) {
                 card.classList.remove('hidden-by-filter');
             } else {
@@ -454,37 +432,36 @@ document.addEventListener('DOMContentLoaded', function() {
         filterCheckboxesContainer.querySelectorAll('.specialty-checkbox-input').forEach(checkbox => {
             checkbox.addEventListener('change', applySpecialtyFilter);
         });
-        applySpecialtyFilter(); // Appliquer au chargement
+        applySpecialtyFilter(); 
     }
 
 
-    // --- GESTION DU CALENDRIER (Code mis à jour) ---
-    const daysOfWeekHeaders = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+    const daysOfWeekHeaders = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];//JOUR SEMAINE
 
     function getWeekDates(date) {
         const startOfWeek = new Date(date);
         const dayOfWeek = startOfWeek.getDay();
         const diff = startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
         startOfWeek.setDate(diff);
-        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setHours(0, 0, 0, 0);//INIT
         
         const week = [];
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 7; i++) {//DIRE 7 JOUR DANS SEMIANE
             const day = new Date(startOfWeek);
-            day.setDate(startOfWeek.getDate() + i);
+            day.setDate(startOfWeek.getDate() + i);//AUGMENTER 
             week.push(day);
         }
         return week;
     }
 
-    function formatDateToYYYYMMDD(date) {
+    function formatDateToYYYYMMDD(date) {//DIRE LA FORME POUR DATE
         const d = new Date(date);
-        let month = '' + (d.getMonth() + 1);
+        let month = '' + (d.getMonth() + 1);//AUGMENTER EN COMMMENCER A 1
         let day = '' + d.getDate();
         const year = d.getFullYear();
-        if (month.length < 2) month = '0' + month;
+        if (month.length < 2) month = '0' + month;//IDEM POUR MOIS
         if (day.length < 2) day = '0' + day;
-        return [year, month, day].join('-');
+        return [year, month, day].join('-');//ON MET TIRET ENTRE DATE E HEURE
     }
     
     function formatTimeHHMM(timeStr) {
@@ -496,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderCalendar(medecinId, weekDates, availabilities) {
         const calendarBody = document.querySelector(`#calendar-${medecinId} tbody`);
         const weekDisplay = document.getElementById(`week-display-${medecinId}`);
-        const btnRdv = document.getElementById(`btn-rdv-${medecinId}`);
+        const btnRdv = document.getElementById(`btn-rdv-${medecinId}`);//BOUTON DU RDV
         
         if (!calendarBody) return;
         calendarBody.innerHTML = ''; 
@@ -505,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const slotsByTime = {};
         availabilities.forEach(dispo => {
-            const heureDebut = formatTimeHHMM(dispo.HeureDebut);
+            const heureDebut = formatTimeHHMM(dispo.HeureDebut);//DONNER LA FORME A RESPECRTER
             if (!slotsByTime[heureDebut]) {
                 slotsByTime[heureDebut] = Array(7).fill(null);
             }
@@ -522,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     prix: dispo.Prix,
                     idServiceLabo: dispo.IdServiceLabo,
                     date: dispo.Date,
-                    status: dispo.status // NOUVEAU : Récupérer le statut
+                    status: dispo.status 
                 });
             }
         });
@@ -531,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (sortedTimes.length === 0) {
             const tr = calendarBody.insertRow();
-            const td = tr.insertCell();
+            const td = tr.insertCell();//AJOUTER A LA BASE UN LIGNE
             td.colSpan = 8;
             td.textContent = "Aucun créneau disponible pour cette semaine.";
             td.style.textAlign = "center";
@@ -552,13 +529,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         const slotButton = document.createElement('button');
                         slotButton.classList.add('time-slot-button');
                         
-                        // --- NOUVEAU : Logique pour les créneaux passés ---
                         if (slotData.status === 'past') {
-                            slotButton.classList.add('past-slot'); // Applique le style gris
-                            slotButton.disabled = true; // Rend le bouton non cliquable
+                            slotButton.classList.add('past-slot'); 
+                            slotButton.disabled = true; 
                             slotButton.innerHTML = `Passé<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
                         } else {
-                            // Créneaux disponibles
                             slotButton.innerHTML = `${formatTimeHHMM(slotData.heureDebut)}<span class="slot-price">${parseFloat(slotData.prix).toFixed(2)} €</span>`;
                             slotButton.dataset.dateDb = slotData.date;
                             slotButton.dataset.heureDebutDb = slotData.heureDebut;
@@ -569,7 +544,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 selectSlot(medecinId, this);
                             };
                         }
-                        // --- FIN NOUVEAU ---
                         
                         td.appendChild(slotButton);
                     } else {
@@ -584,11 +558,11 @@ document.addEventListener('DOMContentLoaded', function() {
             btnRdv.textContent = 'Choisir un créneau';
             btnRdv.classList.remove('active');
         }
-        document.getElementById(`selected-date-db-${medecinId}`).value = '';
+        document.getElementById(`selected-date-db-${medecinId}`).value = '';//ON INIT LES VALEURS
         document.getElementById(`selected-heure-debut-db-${medecinId}`).value = '';
         document.getElementById(`selected-heure-fin-db-${medecinId}`).value = '';
         document.getElementById(`selected-prix-${medecinId}`).value = '';
-        document.getElementById(`id-service-labo-${medecinId}`).value = '';
+        document.getElementById(`id-service-labo-${medecinId}`).value = '';//E?CORE
     }
 
     function fetchAvailabilitiesAndRender(medecinId, currentDateRef) {
@@ -631,25 +605,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnRdv = document.getElementById(`btn-rdv-${medecinId}`);
         if (btnRdv) {
             btnRdv.disabled = false;
-            btnRdv.textContent = 'Valider ce créneau';
+            btnRdv.textContent = 'Valider ce créneau';//INFORMER UTILISATEUR
             btnRdv.classList.add('active');
         }
     }
     
-    // Initialiser les calendriers pour toutes les cartes de médecin.
-    // Le filtre JS s'occupera de les cacher/montrer.
     allDoctorCards.forEach(card => {
         const medecinId = card.id.split('-')[1];
         let currentDateForCalendar = new Date();
         
         fetchAvailabilitiesAndRender(medecinId, currentDateForCalendar);
 
-        card.querySelector('.prev-week').addEventListener('click', function() {
+        card.querySelector('.prev-week').addEventListener('click', function() {///POUR SEMAINE PRECEDENTE
             currentDateForCalendar.setDate(currentDateForCalendar.getDate() - 7);
             fetchAvailabilitiesAndRender(medecinId, currentDateForCalendar);
         });
 
-        card.querySelector('.next-week').addEventListener('click', function() {
+        card.querySelector('.next-week').addEventListener('click', function() {//BOUTON POUR SEMAINE SUIVANTE
             currentDateForCalendar.setDate(currentDateForCalendar.getDate() + 7);
             fetchAvailabilitiesAndRender(medecinId, currentDateForCalendar);
         });

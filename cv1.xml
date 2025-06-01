@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cv>
+    <doctor id="101">
+        <first_name>Patrice</first_name>
+        <last_name>BOUREE</last_name>
+        <specialty>Médecin Généraliste</specialty>
+    </doctor>
+    <section title="Formation">
+        <item>
+            <period>2010-2016</period>
+            <title>Doctorat en Médecine</title>
+            <institution>Université Paris Cité</institution>
+            <description>Diplôme d'État de Docteur en Médecine.</description>
+        </item>
+        <item>
+            <period>2016-2020</period>
+            <title>Internat en Médecine Générale</title>
+            <institution>Assistance Publique - Hôpitaux de Paris (AP-HP)</institution>
+            <description>Spécialisation en médecine de premier recours.</description>
+        </item>
+    </section>
+    <section title="Expérience Professionnelle">
+        <item>
+            <period>2020-Présent</period>
+            <title>Médecin Généraliste</title>
+            <institution>Medicare, Paris</institution>
+            <description>Consultations générales, suivi des maladies chroniques, médecine préventive.</description>
+        </item>
+        <item>
+            <period>2015-2020</period>
+            <title>Praticien Hospitalier</title>
+            <institution>Hôpital Saint-Louis, Paris</institution>
+            <description>Participation aux gardes et au service de médecine interne.</description>
+        </item>
+    </section>
+    <section title="Compétences Clés">
+        <item>Diagnostic et traitement des maladies courantes</item>
+        <item>Suivi des maladies chroniques</item>
+        <item>Conseil en prévention et bien-être</item>
+        <item>Petits actes techniques (sutures, pansements)</item>
+        <item>Communication patient-centrée</item>
+    </section>
+    <section title="À Propos">
+        <text>Le Dr. Patrice Bouree est un médecin généraliste passionné et dévoué, reconnu pour son approche attentive et son engagement envers le bien-être de ses patients. Il met un point d'honneur à offrir des soins complets et personnalisés, en privilégiant l'écoute et la prévention.</text>
+    </section>
+</cv>

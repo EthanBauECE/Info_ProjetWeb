@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cv>
+    <informationsPersonnelles>
+        <!-- Nom et Prénom sont déjà dans la BDD, mais vous pouvez les répéter -->
+        <!-- <nomComplet>Dr. Jean Dupont</nomComplet> -->
+        <emailContact>jean.dupont.cv@example.com</emailContact>
+        <telephoneContact>0601020304</telephoneContact>
+        <adresseWeb>www.dr-dupont-site.com</adresseWeb>
+    </informationsPersonnelles>
+
+    <resume>
+        Médecin généraliste passionné avec plus de 10 ans d'expérience dans le diagnostic et le traitement d'une large gamme de conditions médicales. Engagé à fournir des soins de haute qualité centrés sur le patient.
+    </resume>
+
+    <formation>
+        <diplome>
+            <titre>Doctorat en Médecine</titre>
+            <institution>Université de Médecine de Paris</institution>
+            <anneeObtention>2010</anneeObtention>
+            <mention>Mention Très Honorable</mention>
+        </diplome>
+        <diplome>
+            <titre>Diplôme d'Études Spécialisées en Médecine Générale</titre>
+            <institution>Faculté de Médecine de Lyon</institution>
+            <anneeObtention>2012</anneeObtention>
+        </diplome>
+    </formation>
+
+    <experienceProfessionnelle>
+        <poste>
+            <titrePoste>Médecin Généraliste</titrePoste>
+            <employeur>Clinique SantéPourTous</employeur>
+            <ville>Paris</ville>
+            <periode>2013 - Présent</periode>
+            <responsabilites>
+                <responsabilite>Consultations médicales générales pour adultes et enfants.</responsabilite>
+                <responsabilite>Suivi des maladies chroniques.</responsabilite>
+                <responsabilite>Campagnes de prévention et vaccination.</responsabilite>
+            </responsabilites>
+        </poste>
+        <poste>
+            <titrePoste>Interne en Médecine</titrePoste>
+            <employeur>Hôpital Central</employeur>
+            <ville>Lyon</ville>
+            <periode>2010 - 2012</periode>
+            <responsabilites>
+                <responsabilite>Rotation dans divers services (urgences, pédiatrie, cardiologie).</responsabilite>
+                <responsabilite>Participation aux gardes.</responsabilite>
+            </responsabilites>
+        </poste>
+    </experienceProfessionnelle>
+
+    <competences>
+        <categorie nom="Médicales">
+            <competence>Diagnostic clinique</competence>
+            <competence>Prise en charge des urgences mineures</competence>
+            <competence>Lecture d'électrocardiogrammes (ECG)</competence>
+        </categorie>
+        <categorie nom="Linguistiques">
+            <competence>Français (Langue maternelle)</competence>
+            <competence>Anglais (Courant)</competence>
+        </categorie>
+        <categorie nom="Informatiques">
+            <competence>Logiciels de gestion de cabinet médical</competence>
+            <competence>Suite Office</competence>
+        </categorie>
+    </competences>
+
+    <publicationsEtRecherches>
+        <item type="publication">
+            <titre>"L'impact du stress sur la santé cardiovasculaire"</titre>
+            <support>Revue Médicale Française, Vol. 25, No. 2</support>
+            <annee>2018</annee>
+        </item>
+        <item type="conference">
+            <titre>"Nouvelles approches en médecine préventive"</titre>
+            <support>Congrès National de Médecine Générale, Lyon</support>
+            <annee>2019</annee>
+        </item>
+    </publicationsEtRecherches>
+
+    <referencesPro>
+        <reference surDemande="true">Références disponibles sur demande.</reference>
+    </referencesPro>
+</cv>

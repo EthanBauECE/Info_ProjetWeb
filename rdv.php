@@ -1,110 +1,106 @@
 <?php
-session_start();
-error_reporting(E_ALL);
+session_start(); //démarre session php-->accès aux var
+error_reporting(E_ALL); //affiche ttes les erreurs si besoin pour corriger
 ini_set('display_errors', 1);
 
-function safe_html($value) {
+function safe_html($value) {//empeche attaques XSS en échaappant les caracteres speciaux
     return $value !== null ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
 }
 
-// Redirection si l'utilisateur n'est pas connecté
-if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php?redirect=" . urlencode('rdv.php'));
+if (!isset($_SESSION["user_id"])) {//vérifie utilisateur conneté
+    header("Location: login.php?redirect=" . urlencode('rdv.php'));//sinon redirect sur login.php
     exit();
 }
 
-$idClient = $_SESSION["user_id"];
-$success_message = '';
+$idClient = $_SESSION["user_id"]; //id utilisateur actuel
+$success_message = '';//pas de message mais verif
 $error_message = '';
 
-// --- Connexion à la base de données ---
-$conn = new mysqli("localhost", "root", "", "base_donne_web");
-if ($conn->connect_error) {
+$conn = new mysqli("localhost", "root", "", "base_donne_web");//connexion à base de donnees avec utilisateur root
+if ($conn->connect_error) {//verif connexion fonctionne
     die("Erreur de connexion: " . $conn->connect_error);
 }
-$conn->set_charset("utf8");
+$conn->set_charset("utf8");//pour accents fr etc
 
-// --- Traitement de l'annulation du rendez-vous ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_rdv_to_cancel'])) {
-    $rdv_id_to_cancel = intval($_POST['id_rdv_to_cancel']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_rdv_to_cancel'])) {//detecte si annulation rdv
+    $rdv_id_to_cancel = intval($_POST['id_rdv_to_cancel']);//transforme id en entier securise
 
-    $conn->begin_transaction();
+    $conn->begin_transaction(); //commence transact pour assurer que ttes les op se font ensemble
     try {
         $sql_get_rdv = "SELECT DateRDV, HeureDebut, HeureFin, ID_Personnel, ID_ServiceLabo, ID_Paiement
                         FROM rdv
-                        WHERE ID = ? AND ID_Client = ?";
+                        WHERE ID = ? AND ID_Client = ?";//verif que le rdv existe et est à l'uitlisateur+ recup id du service, labo, med, horaire et paiement
         $stmt_get_rdv = $conn->prepare($sql_get_rdv);
-        if (!$stmt_get_rdv) throw new Exception("Erreur préparation requête get_rdv: " . $conn->error);
-        $stmt_get_rdv->bind_param("ii", $rdv_id_to_cancel, $idClient);
-        $stmt_get_rdv->execute();
+        if (!$stmt_get_rdv) throw new Exception("Erreur préparation requête get_rdv: " . $conn->error); //reverif sur w3schools, verif erreurs
+        $stmt_get_rdv->bind_param("ii", $rdv_id_to_cancel, $idClient); //https://www.php.net/manual/en/mysqli-stmt.bind-param.php, fais en sorte que l'annulation soit appliquee à l'utilisateur
+        $stmt_get_rdv->execute(); 
         $result_get_rdv = $stmt_get_rdv->get_result();
 
-        if ($result_get_rdv->num_rows === 0) {
-            throw new Exception("Rendez-vous non trouvé ou vous n'êtes pas autorisé à l'annuler.");
+        if ($result_get_rdv->num_rows === 0) { //pour gérer les erreurss
+            throw new Exception("Rendez-vous non trouvé ou vous n'êtes pas autorisé à l'annuler.");//message d'erreur
         }
 
-        $rdv_info = $result_get_rdv->fetch_assoc();
-        $stmt_get_rdv->close();
+        $rdv_info = $result_get_rdv->fetch_assoc();//recup les lignes du rdv en tableau + lit la prochaine ligne de requete-->acces des chps daterdv, HeureDebut...
+        $stmt_get_rdv->close(); //fermer le statement prep apres utilisation+libere ressources memoires
 
-        $date_rdv = $rdv_info['DateRDV'];
-        $heure_debut_rdv = $rdv_info['HeureDebut'];
-        $heure_fin_rdv = $rdv_info['HeureFin'];
-        $id_personnel_rdv = $rdv_info['ID_Personnel'];
-        $id_service_labo_rdv = $rdv_info['ID_ServiceLabo'];
-        $id_paiement_rdv = $rdv_info['ID_Paiement'];
+        $date_rdv = $rdv_info['DateRDV'];//stocke la date du rdv 
+        $heure_debut_rdv = $rdv_info['HeureDebut']; //stocke heure du rdv
+        $heure_fin_rdv = $rdv_info['HeureFin']; //stocke herue fin de rdv (utile pour dispo)
+        $id_personnel_rdv = $rdv_info['ID_Personnel'];//stocke id medecin, si 0-> labo
+        $id_service_labo_rdv = $rdv_info['ID_ServiceLabo']; //stocke le labo, si 0-->medecin
+        $id_paiement_rdv = $rdv_info['ID_Paiement']; //id de l'entree ds table des paiement pour le rdv, facilite la suppression pour annulation
 
-        $prix_to_reinsert = 0.0;
-        if ($id_service_labo_rdv != 0) {
-            $stmt_get_price = $conn->prepare("SELECT Prix FROM service_labo WHERE ID = ?");
-            if (!$stmt_get_price) throw new Exception("Erreur préparation requête get_price: " . $conn->error);
-            $stmt_get_price->bind_param("i", $id_service_labo_rdv);
-            $stmt_get_price->execute();
-            $result_get_price = $stmt_get_price->get_result();
-            if ($price_row = $result_get_price->fetch_assoc()) {
-                $prix_to_reinsert = $price_row['Prix'];
+        $prix_to_reinsert = 0.0;//init prix 
+        if ($id_service_labo_rdv != 0) {//verif si c'est un rdv en labo
+            $stmt_get_price = $conn->prepare("SELECT Prix FROM service_labo WHERE ID = ?");//prep requete sql pour prix du service de labo
+            if (!$stmt_get_price) throw new Exception("Erreur préparation requête get_price: " . $conn->error);//si echec, exception (debug)
+            $stmt_get_price->bind_param("i", $id_service_labo_rdv);//lie id du labo à requete (type i=integer)
+            $stmt_get_price->execute();//fais la requete
+            $result_get_price = $stmt_get_price->get_result(); //recup resultat (prix)
+            if ($price_row = $result_get_price->fetch_assoc()) {//si ligne retournée, on recup le champ prix 
+                $prix_to_reinsert = $price_row['Prix'];//et stocke dans$prix_to_reinsert 
             }
-            $stmt_get_price->close();
-        } elseif ($id_personnel_rdv != 0) {
-            $prix_to_reinsert = 28.00;
+            $stmt_get_price->close();//fermeture requete
+        } elseif ($id_personnel_rdv != 0) {//si ID_personnel non nul--> medecin
+            $prix_to_reinsert = 28.00;//prix fixe:28€
         }
 
         $sql_insert_dispo = "INSERT INTO dispo (Date, HeureDebut, HeureFin, IdPersonnel, IdServiceLabo, Prix)
                              VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt_insert_dispo = $conn->prepare($sql_insert_dispo);
-        if (!$stmt_insert_dispo) throw new Exception("Erreur préparation requête insert_dispo: " . $conn->error);
-        $stmt_insert_dispo->bind_param("sssiid", $date_rdv, $heure_debut_rdv, $heure_fin_rdv, $id_personnel_rdv, $id_service_labo_rdv, $prix_to_reinsert);
-        $stmt_insert_dispo->execute();
-        $stmt_insert_dispo->close();
+        $stmt_insert_dispo = $conn->prepare($sql_insert_dispo);//on prep un requete d'insertion pour remmettre dans dispo
+        if (!$stmt_insert_dispo) throw new Exception("Erreur préparation requête insert_dispo: " . $conn->error);//verif requete prep correctement
+        $stmt_insert_dispo->bind_param("sssiid", $date_rdv, $heure_debut_rdv, $heure_fin_rdv, $id_personnel_rdv, $id_service_labo_rdv, $prix_to_reinsert);//on lie les val aux ? de la requete
+        $stmt_insert_dispo->execute(); //execution
+        $stmt_insert_dispo->close(); //fermeture
 
-        $sql_delete_rdv = "DELETE FROM rdv WHERE ID = ?";
-        $stmt_delete_rdv = $conn->prepare($sql_delete_rdv);
-        if (!$stmt_delete_rdv) throw new Exception("Erreur préparation requête delete_rdv: " . $conn->error);
-        $stmt_delete_rdv->bind_param("i", $rdv_id_to_cancel);
+        $sql_delete_rdv = "DELETE FROM rdv WHERE ID = ?";//prepare la requete sql pour supprimer un rdv de la table rdv
+        $stmt_delete_rdv = $conn->prepare($sql_delete_rdv); //creation requete preparee, https://www.php.net/manual/fr/pdo.prepared-statements.php
+        if (!$stmt_delete_rdv) throw new Exception("Erreur préparation requête delete_rdv: " . $conn->error); //si requete echoue, exception
+        $stmt_delete_rdv->bind_param("i", $rdv_id_to_cancel);//lie id du rdv a annuler a la requete preparee
         $stmt_delete_rdv->execute();
         $stmt_delete_rdv->close();
 
-        if ($id_paiement_rdv !== null) {
-            $sql_delete_paiement = "DELETE FROM id_paiement WHERE ID = ?";
+        if ($id_paiement_rdv !== null) {//verif si paiement associe au rdv
+            $sql_delete_paiement = "DELETE FROM id_paiement WHERE ID = ?";// prep une requete pour supp paiement
             $stmt_delete_paiement = $conn->prepare($sql_delete_paiement);
-            if ($stmt_delete_paiement) {
+            if ($stmt_delete_paiement) {// si requete bien prep, elle est executée et fermee
                 $stmt_delete_paiement->bind_param("i", $id_paiement_rdv);
                 $stmt_delete_paiement->execute();
                 $stmt_delete_paiement->close();
             } else {
-                 error_log("Erreur préparation requête delete_paiement: " . $conn->error);
+                 error_log("Erreur préparation requête delete_paiement: " . $conn->error);//si erreur, on l'ecrit dans log
             }
         }
-        $conn->commit();
-        $success_message = "Rendez-vous annulé avec succès. Le créneau est de nouveau disponible.";
-    } catch (Exception $e) {
+        $conn->commit(); //si tt va bien, on valide la transaction
+        $success_message = "Rendez-vous annulé avec succès. Le créneau est de nouveau disponible.";//message de succes
+    } catch (Exception $e) {//si erreur -->tout est annule
         $conn->rollback();
-        $error_message = "Erreur lors de l'annulation: " . $e->getMessage();
+        $error_message = "Erreur lors de l'annulation: " . $e->getMessage();//message erreur
     }
 }
 
-date_default_timezone_set('Europe/Paris');
+date_default_timezone_set('Europe/Paris');//pour les rdv
 
-// --- Récupération des rendez-vous pour l'affichage ---
 $sql_rdv = "
     SELECT
         R.ID AS rdv_id,
@@ -163,104 +159,103 @@ $sql_rdv = "
         R.ID_Client = ?
     ORDER BY
         R.DateRDV ASC, R.HeureDebut ASC;
-";
+"; // requete recup les infos utiles pour chaque rdv (selon le type) LEFT JOIN-->lier tables sans perdre de lignes, AS --> renom colones
 
 
-$stmt_rdv = $conn->prepare($sql_rdv);
+$stmt_rdv = $conn->prepare($sql_rdv);// si requete echoue
 if (!$stmt_rdv) {
-    die("Erreur de préparation de la requête des RDV: " . $conn->error . "<br><pre>" . $sql_rdv . "</pre>");
+    die("Erreur : " . $conn->error . "<br><pre>" . $sql_rdv . "</pre>");//affiche erreur 
 }
-$stmt_rdv->bind_param("i", $idClient);
+$stmt_rdv->bind_param("i", $idClient);//lie id client a la requete sql
 $stmt_rdv->execute();
-$result_rdv = $stmt_rdv->get_result();
+$result_rdv = $stmt_rdv->get_result();//recup le resultat 
 
-$upcoming_rdv = [];
-$past_rdv = [];
-$now = new DateTime();
+$upcoming_rdv = [];//init tableau rdv (futur)
+$past_rdv = [];//init tableau rdv passe
+$now = new DateTime(); //recup date/heure 
 
-while ($rdv_data = $result_rdv->fetch_assoc()) {
-    $rdv_datetime_str = $rdv_data['DateRDV'] . ' ' . $rdv_data['HeureDebut'];
-    try {
+while ($rdv_data = $result_rdv->fetch_assoc()) {//on boucle sur chaque ligne du resultatt sql
+    $rdv_datetime_str = $rdv_data['DateRDV'] . ' ' . $rdv_data['HeureDebut'];//prep chaine lisible par DateTime
+    try {//convertion la chaine en obj DateTime pour comparer
         $rdv_datetime = new DateTime($rdv_datetime_str);
         if ($rdv_datetime < $now) {
-            $past_rdv[] = $rdv_data;
+            $past_rdv[] = $rdv_data;//si date avant mtn--> $past_rdv
         } else {
-            $upcoming_rdv[] = $rdv_data;
+            $upcoming_rdv[] = $rdv_data;//sinon dans $upcoming_rdv
         }
-    } catch (Exception $e) {
+    } catch (Exception $e) {// si la date est mal formee, on log l'erreur
         error_log("Invalid date format for RDV ID " . $rdv_data['rdv_id'] . ": " . $rdv_datetime_str . " - " . $e->getMessage());
     }
 }
 
-$stmt_rdv->close();
-$conn->close();
+$stmt_rdv->close();//feermeture
+$conn->close();//fermeture
 
 if (isset($_SESSION['success_message'])) {
-    $success_message = $_SESSION['success_message'];
-    unset($_SESSION['success_message']);
+    $success_message = $_SESSION['success_message'];//recup message de succes 
+    unset($_SESSION['success_message']);//suppr le message
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="fr">
-<?php require 'includes/head.php'; ?>
+<?php require 'includes/head.php'; ?> <!--inclus l'interface du haut de page-->
 <body>
-<?php require 'includes/header.php'; ?>
+<?php require 'includes/header.php'; ?><!--inclus l'interface de nav de la page-->
 
-<main class="main-content-page">
-    <h1 style="text-align: center; margin-bottom: 2rem;">Mes Rendez-vous</h1>
+<main class="main-content-page"> <!--corps de la page-->
+    <h1 style="text-align: center; margin-bottom: 2rem;">Mes Rendez-vous</h1> <!--nom de la page-->
 
     <?php
     if (!empty($success_message)) {
-        echo '<div class="alert success">' . safe_html($success_message) . '</div>';
+        echo '<div class="alert success">' . safe_html($success_message) . '</div>'; //message de succes 
     }
     if (!empty($error_message)) {
-        echo '<div class="alert error">' . safe_html($error_message) . '</div>';
+        echo '<div class="alert error">' . safe_html($error_message) . '</div>';//message d'erreru
     }
     ?>
 
-    <section class="rdv-section">
-        <?php if (empty($upcoming_rdv) && empty($past_rdv)): ?>
-            <p style="text-align: center; font-size: 1.1em; color: #6c757d; margin-top: 30px;">Vous n'avez aucun rendez-vous pour le moment.</p>
+    <section class="rdv-section"> <!--affichage des rdv-->
+        <?php if (empty($upcoming_rdv) && empty($past_rdv)): ?> <!-- si pas de rdv-->
+            <p style="text-align: center; font-size: 1.1em; color: #6c757d; margin-top: 30px;">Vous n'avez aucun rendez-vous pour le moment.</p><!--cas ou ya aucun rdv-->
             <p style="text-align: center; margin-top: 15px;">
-                <a href="medecine_general.php" class="btn-action-link">Prendre un rendez-vous médecin</a>
-                <a href="laboratoire.php" class="btn-action-link btn-labo">Prendre un rendez-vous laboratoire</a>
+                <a href="medecine_general.php" class="btn-action-link">Prendre un rendez-vous médecin</a> <!--lien pour prendre rdv avec med-->
+                <a href="laboratoire.php" class="btn-action-link btn-labo">Prendre un rendez-vous laboratoire</a><!--lien pour prendre rdv avec labo-->
             </p>
         <?php endif; ?>
 
-        <?php if (!empty($upcoming_rdv)): ?>
-            <h2 class="rdv-section-title">Rendez-vous à venir</h2>
+        <?php if (!empty($upcoming_rdv)): ?> <!--s'il y a des rdv-->
+            <h2 class="rdv-section-title">Rendez-vous à venir</h2><!-- titre-->
             <div class="rdv-list">
-                <?php foreach ($upcoming_rdv as $rdv): ?>
+                <?php foreach ($upcoming_rdv as $rdv): ?> <!--on set les rdv-->
                     <div class="rdv-card upcoming">
                         <div class="rdv-header">
                             <?php
-                            $is_doctor_rdv = (isset($rdv['ID_Personnel']) && $rdv['ID_Personnel'] != 0 && $rdv['ID_Personnel'] !== null);
+                            $is_doctor_rdv = (isset($rdv['ID_Personnel']) && $rdv['ID_Personnel'] != 0 && $rdv['ID_Personnel'] !== null); //verif si le rdv est avec med
                             ?>
-                            <?php if ($is_doctor_rdv): ?>
+                            <?php if ($is_doctor_rdv): ?> <!--si rdv bien avec med-->
                                 <div class="rdv-photo-container">
-                                    <img src="<?php echo safe_html($rdv['prof_photo'] ?: './images/default_doctor.png'); ?>" alt="Photo Dr. <?php echo safe_html($rdv['prof_nom']); ?>" class="rdv-photo">
+                                    <img src="<?php echo safe_html($rdv['prof_photo'] ?: './images/default_doctor.png'); ?>" alt="Photo Dr. <?php echo safe_html($rdv['prof_nom']); ?>" class="rdv-photo"> <!--affichage photo-->
                                 </div>
-                                <div class="rdv-title-details">
+                                <div class="rdv-title-details"> <!--info med-->
                                     <h3>Dr. <?php echo safe_html($rdv['prof_prenom']) . ' ' . safe_html($rdv['prof_nom']); ?></h3>
-                                    <p class="rdv-type"><?php echo safe_html($rdv['prof_specialite']); ?></p>
+                                    <p class="rdv-type"><?php echo safe_html($rdv['prof_specialite']); ?></p> <!--spécialité-->
                                 </div>
-                            <?php else: // Rendez-vous laboratoire ?>
+                            <?php else:?> <!--sinon labo-->
                                 <div class="rdv-photo-container">
-                                    <img src="./images/default_labo.jpg" alt="Laboratoire" class="rdv-photo">
+                                    <img src="./images/default_labo.jpg" alt="Laboratoire" class="rdv-photo"> <!--photo labo-->
                                 </div>
                                 <div class="rdv-title-details">
                                     <h3><?php echo safe_html($rdv['labo_nom']); ?></h3>
-                                    <p class="rdv-type">Service : <?php echo safe_html($rdv['service_labo_nom']); ?></p>
+                                    <p class="rdv-type">Service : <?php echo safe_html($rdv['service_labo_nom']); ?></p> <!--service demande-->
                                 </div>
                             <?php endif; ?>
                         </div>
-                        <div class="rdv-body">
+                        <div class="rdv-body"> <!--carte + details-->
                             <p><strong>Date :</strong> <?php echo date("d/m/Y", strtotime(safe_html($rdv['DateRDV']))); ?></p>
-                            <p><strong>Heure :</strong> <?php echo substr(safe_html($rdv['HeureDebut']), 0, 5) . ' - ' . substr(safe_html($rdv['HeureFin']), 0, 5); ?></p>
+                            <p><strong>Heure :</strong> <?php echo substr(safe_html($rdv['HeureDebut']), 0, 5) . ' - ' . substr(safe_html($rdv['HeureFin']), 0, 5); ?></p> <!--date du rdv-->
 
-                            <?php if ($is_doctor_rdv): ?>
-                                <?php if (!empty($rdv['prof_adresse_ligne'])): ?>
+                            <?php if ($is_doctor_rdv): ?><!--si c'est un rdv avec un médecin-->
+                                <?php if (!empty($rdv['prof_adresse_ligne'])): ?><!--si il y a adresse-->
                                     <p><strong>Adresse Cabinet :</strong>
                                         <?php
                                             echo safe_html($rdv['prof_adresse_ligne']);
@@ -272,14 +267,14 @@ if (isset($_SESSION['success_message'])) {
                                         ?>
                                     </p>
                                 <?php endif; ?>
-                                <?php if (!empty($rdv['prof_telephone'])): ?>
+                                <?php if (!empty($rdv['prof_telephone'])): ?> <!--affiche tel cabinet-->
                                     <p><strong>Téléphone Cabinet :</strong> <?php echo safe_html($rdv['prof_telephone']); ?></p>
                                 <?php endif; ?>
-                                <?php if (!empty($rdv['prof_email'])): ?>
+                                <?php if (!empty($rdv['prof_email'])): ?><!--email cab-->
                                     <p><strong>Email Cabinet :</strong> <a href="mailto:<?php echo safe_html($rdv['prof_email']); ?>"><?php echo safe_html($rdv['prof_email']); ?></a></p>
                                 <?php endif; ?>
-                            <?php else: // Laboratoire ?>
-                                <?php if (!empty($rdv['labo_adresse_ligne'])): ?>
+                            <?php else: ?> <!--rdv en labo ?-->
+                                <?php if (!empty($rdv['labo_adresse_ligne'])): ?> <!--meme trame que med-->
                                     <p><strong>Adresse Labo :</strong>
                                         <?php
                                             echo safe_html($rdv['labo_adresse_ligne']);
@@ -302,40 +297,40 @@ if (isset($_SESSION['success_message'])) {
                                 <?php endif; ?>
                             <?php endif; ?>
 
-                            <p><strong>Statut :</strong> <span class="status-upcoming"><?php echo safe_html($rdv['Statut']); ?></span></p>
+                            <p><strong>Statut :</strong> <span class="status-upcoming"><?php echo safe_html($rdv['Statut']); ?></span></p><!--on affiche le statuut du rdv-->
                             <?php if (!empty($rdv['InfoComplementaire'])): ?>
                                 <p><strong>Infos Complémentaires RDV :</strong> <?php echo safe_html($rdv['InfoComplementaire']); ?></p>
                             <?php endif; ?>
                         </div>
-                        <div class="rdv-actions">
+                        <div class="rdv-actions"> <!--bouton annul-->
                             <form method="POST" action="rdv.php" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?');">
                                 <input type="hidden" name="id_rdv_to_cancel" value="<?php echo safe_html($rdv['rdv_id']); ?>">
                                 <button type="submit" class="btn-cancel">Annuler le RDV</button>
                             </form>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <?php endforeach; ?> <!-- fin du parcour de tableau-->
             </div>
         <?php endif; ?>
 
-        <?php if (!empty($past_rdv)): ?>
+        <?php if (!empty($past_rdv)): ?> <!--verif rdv passe a afficher-->
             <h2 class="rdv-section-title past-title">Rendez-vous passés</h2>
             <div class="rdv-list">
-                <?php foreach ($past_rdv as $rdv): ?>
+                <?php foreach ($past_rdv as $rdv): ?> <!--pour chaque rdv de rdv passe on fait:-->
                     <div class="rdv-card past">
                         <div class="rdv-header">
                             <?php
                             $is_doctor_rdv = (isset($rdv['ID_Personnel']) && $rdv['ID_Personnel'] != 0 && $rdv['ID_Personnel'] !== null);
-                            ?>
-                            <?php if ($is_doctor_rdv): ?>
+                            ?><!--rdv avec med ou labo?-->
+                            <?php if ($is_doctor_rdv): ?> <!--si c'est un med-->
                                 <div class="rdv-photo-container">
                                     <img src="<?php echo safe_html($rdv['prof_photo'] ?: './images/default_doctor.png'); ?>" alt="Photo Dr. <?php echo safe_html($rdv['prof_nom']); ?>" class="rdv-photo grayscale">
                                 </div>
                                 <div class="rdv-title-details">
                                     <h3>Dr. <?php echo safe_html($rdv['prof_prenom']) . ' ' . safe_html($rdv['prof_nom']); ?></h3>
                                     <p class="rdv-type"><?php echo safe_html($rdv['prof_specialite']); ?></p>
-                                </div>
-                            <?php else: // Rendez-vous laboratoire ?>
+                                </div><!-- on affiche les details du medecin-->
+                            <?php else: ?> <!--labo-->
                                 <div class="rdv-photo-container">
                                     <img src="./images/default_labo.jpg" alt="Laboratoire" class="rdv-photo grayscale">
                                 </div>
@@ -347,9 +342,9 @@ if (isset($_SESSION['success_message'])) {
                         </div>
                         <div class="rdv-body">
                             <p><strong>Date :</strong> <?php echo date("d/m/Y", strtotime(safe_html($rdv['DateRDV']))); ?></p>
-                            <p><strong>Heure :</strong> <?php echo substr(safe_html($rdv['HeureDebut']), 0, 5) . ' - ' . substr(safe_html($rdv['HeureFin']), 0, 5); ?></p>
+                            <p><strong>Heure :</strong> <?php echo substr(safe_html($rdv['HeureDebut']), 0, 5) . ' - ' . substr(safe_html($rdv['HeureFin']), 0, 5); ?></p> <!--affcihe les details du rdv-->
 
-                            <?php if ($is_doctor_rdv): ?>
+                            <?php if ($is_doctor_rdv): ?> <!--affiche adresse cabinet et autres infos-->
                                 <?php if (!empty($rdv['prof_adresse_ligne'])): ?>
                                     <p><strong>Adresse Cabinet :</strong>
                                         <?php
@@ -361,14 +356,14 @@ if (isset($_SESSION['success_message'])) {
                                             }
                                         ?>
                                     </p>
-                                <?php endif; ?>
+                                <?php endif; ?> <!--affiche les moyen de communiquer-->
                                 <?php if (!empty($rdv['prof_telephone'])): ?>
                                     <p><strong>Téléphone Cabinet :</strong> <?php echo safe_html($rdv['prof_telephone']); ?></p>
                                 <?php endif; ?>
                                 <?php if (!empty($rdv['prof_email'])): ?>
                                     <p><strong>Email Cabinet :</strong> <a href="mailto:<?php echo safe_html($rdv['prof_email']); ?>"><?php echo safe_html($rdv['prof_email']); ?></a></p>
                                 <?php endif; ?>
-                            <?php else: // Laboratoire ?>
+                            <?php else: // Labo ?>
                                 <?php if (!empty($rdv['labo_adresse_ligne'])): ?>
                                     <p><strong>Adresse Labo :</strong>
                                         <?php
@@ -380,7 +375,7 @@ if (isset($_SESSION['success_message'])) {
                                             }
                                         ?>
                                     </p>
-                                <?php endif; ?>
+                                <?php endif; ?><!--meme struct pour le labo-->
                                 <?php if (!empty($rdv['labo_telephone'])): ?>
                                     <p><strong>Téléphone Labo :</strong> <?php echo safe_html($rdv['labo_telephone']); ?></p>
                                 <?php endif; ?>
@@ -392,13 +387,13 @@ if (isset($_SESSION['success_message'])) {
                                 <?php endif; ?>
                             <?php endif; ?>
 
-                            <p><strong>Statut :</strong> <span class="status-past">Terminé</span></p>
+                            <p><strong>Statut :</strong> <span class="status-past">Terminé</span></p> <!--rdv passés donc tjrs termine-->
                             <?php if (!empty($rdv['InfoComplementaire'])): ?>
                                 <p><strong>Infos Complémentaires RDV :</strong> <?php echo safe_html($rdv['InfoComplementaire']); ?></p>
-                            <?php endif; ?>
+                            <?php endif; ?> <!-- infos complementaires pr le rdv-->
                         </div>
                         <div class="rdv-actions">
-                            <span class="past-label">Rendez-vous passé</span>
+                            <span class="past-label">Rendez-vous passé</span> <!--pas de bouton caar passe-->
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -407,10 +402,9 @@ if (isset($_SESSION['success_message'])) {
     </section>
 </main>
 
-<?php require 'includes/footer.php'; ?>
+<?php require 'includes/footer.php'; ?> <!--inclus presentation bas de page-->
 
 <style>
-/* Styles spécifiques pour la page rdv.php (la plupart existent déjà) */
 .main-content-page {
     padding: 2rem;
     background-color: #f2f2f2;
@@ -447,11 +441,10 @@ if (isset($_SESSION['success_message'])) {
 .rdv-card {
     background-color: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     padding: 20px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out;
 }
 
 .rdv-card:hover {
@@ -480,11 +473,9 @@ if (isset($_SESSION['success_message'])) {
 }
 
 .rdv-photo-container {
-    flex-shrink: 0;
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    overflow: hidden;
     border: 2px solid #0a7abf;
     display: flex;
     align-items: center;
@@ -554,7 +545,7 @@ if (isset($_SESSION['success_message'])) {
     color: #777;
 }
 .rdv-card.past .rdv-body p a {
-    color: #0056b3; /* Darker link for past appointments */
+    color: #0056b3; 
 }
 
 

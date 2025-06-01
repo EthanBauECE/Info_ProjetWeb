@@ -1,199 +1,178 @@
 <!DOCTYPE html>
 <html lang="fr">
-
-<!-- Importation du head -->
 <?php require 'includes/head.php'; ?>
 
 <body>
 
-    <!-- Importation du header -->
     <?php require 'includes/header.php'; ?>
-
-    <!-- Présentation site -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Welcome to Medical Services You Can Trust</h1>
-            <p>Votre santé est notre priorité. Prenez rendez-vous dès maintenant avec l’un de nos spécialistes.</p>
+            <h1>Bienvenue sur le site Medicare</h1><!--phrase introduction du site-->
+            <p>Votre santé est notre priorité. Prenez rendez-vous dès maintenant avec l’un de nos spécialistes.</p><!--pour attirer de nouvellles personnes-->
             <div class="hero-buttons">
-                <a href="register.php">Prendre RDV</a>
-                <a href="parcourir.php">Voir Emploi du Temps</a>
+                <a href="register.php">Prendre RDV</a><!--bouton pour pouvoir prendr rendez-vous-->
+                <a href="parcourir.php">Voir Emploi du Temps</a><!--et un autrea aussi pour voir emploi du temps-->
             </div>
         </div>
     </section>
 
-    <!-- NOUVEAU : Section Événement / Bulletin de Santé de la Semaine -->
     <section class="event-bulletin-section">
         <div class="event-bulletin-container">
-            <h2 class="section-title">Événements & Bulletin de Santé de la Semaine</h2>
-
-            <p class="intro-text">Découvrez les activités importantes de Medicare, les dernières nouvelles en matière de santé publique et parcourez nos installations en images.</p>
+            <h2 class="section-title">Événements & Bulletin de Santé de la Semaine</h2><!--on affiche ici les differents activit ee t truc de santé-->
+            <p class="intro-text">Découvrez les activités importantes de Medicare, les dernières nouvelles en image</p><!--on parle ici encore a l utilisateur pour qu il soit au courant-->
 
             <div class="content-wrapper">
-                <!-- Bloc pour les actualités ou événements principaux -->
                 <div class="health-news-block">
-                    <h3>Actualités & Infos Santé</h3>
+                    <h3>Actualités & Infos Santé</h3><!--titre de la partie POUR INFORMER-->
                     <div class="news-item">
-                        <h4><i class="fas fa-calendar-alt"></i> Porte Ouverte Medicare : Innovation et Bien-être !</h4>
-                        <p>Participez à notre journée portes ouvertes le <strong>Samedi 10 Juin de 9h à 17h</strong>. Explorez nos nouvelles salles de consultation, rencontrez nos équipes et découvrez les dernières avancées technologiques en médecine. Des mini-conférences sur la prévention des maladies chroniques et des démonstrations de nos équipements seront organisées. Venez nombreux !</p>
+                        <h4><i class="fas fa-calendar-alt"></i> Porte Ouverte Medicare</h4><!--titre en haut pour savoir ou on est-->
+                        <p>Participez à notre journée portes ouvertes le <strong>Samedi 10 Juin de 9h à 17h</strong>. Explorez nos nouvelles salles de consultation, rencontrez nos équipes et découvrez les dernières technologies. Des mini-conférences sur la prévention  et des démonstrations de nos équipements seront organisées. </p><!--messsage poiur indiquer et avec un lien avec utilisateru-->
                     </div>
                     <div class="news-item">
-                        <h4><i class="fas fa-medkit"></i> Campagne de Don du Sang Urgente</h4>
-                        <p>En collaboration avec l'Établissement Français du Sang (EFS), Medicare organise une collecte de sang exceptionnelle le <strong>Jeudi 15 Juin de 10h à 18h</strong>. Chaque don compte et peut sauver jusqu'à trois vies. Votre générosité est plus que jamais nécessaire. Prenez rendez-vous sur notre site ou présentez-vous directement. Merci de votre engagement !</p>
+                        <h4><i class="fas fa-medkit"></i> Campagne de Don du Sang Urgente</h4><!--titre pour la partie-->
+                        <p>En collaboration avec l'Établissement Français du Sang (EFS), Medicare organise une collecte de sang exceptionnelle le <strong>Jeudi 15 Juin de 10h à 18h</strong>. Chaque don compte et peut sauver jusqu'à trois vies. Prenez rendez-vous sur notre site. Merci de votre engagement !</p><!--messsage poiur indiquer et avec un lien avec utilisateru-->
                     </div>
                     <div class="news-item">
-                        <h4><i class="fas fa-virus"></i> Bulletin COVID-19 : Les gestes barrières restent essentiels</h4>
-                        <p>Bien que la situation s'améliore, le virus circule toujours. Continuez à respecter les gestes barrières (lavage des mains, port du masque en cas de symptômes, aération des espaces). Retrouvez toutes les informations et les centres de dépistage PCR/antigénique disponibles sur notre page dédiée à la santé publique.</p>
+                        <h4><i class="fas fa-virus"></i> Bulletin COVID-19 : Les gestes barrières restent essentiels</h4><!--titre pour la partie-->
+                        <p>Bien que la situation s'améliore, le virus circule toujours. Continuez à respecter les gestes barrières (lavage des mains, port du masque en cas de symptômes, aération des espaces). Retrouvez toutes les informations et les centres de dépistage PCR/antigénique disponibles sur notre page dédiée à la santé publique.</p><!--messsage poiur indiquer et avec un lien avec utilisateru-->
                     </div>
                     <div class="news-item">
-                        <h4><i class="fas fa-heartbeat"></i> Nouveau : Service de Téléconsultation Cardiologique</h4>
-                        <p>Pour un suivi régulier ou un premier avis, nos cardiologues sont désormais disponibles en téléconsultation. Gagnez du temps et bénéficiez de l'expertise de nos spécialistes depuis chez vous. Prise de rendez-vous facile via votre espace patient.</p>
+                        <h4><i class="fas fa-heartbeat"></i> Nouveau : Service de Téléconsultation Cardiologique</h4><!--titre pour la partie-->
+                        <p>Pour un suivi régulier ou un premier avis, nos cardiologues sont désormais disponibles en téléconsultation. Gagnez du temps et bénéficiez de l'expertise de nos spécialistes depuis chez vous. Prise de rendez-vous facile via votre espace patient.</p><!--messsage poiur indiquer et avec un lien avec utilisateru-->
                     </div>
                     <div class="news-item">
-                        <h4><i class="fas fa-calendar-check"></i> Séminaire sur la Santé Mentale et le Bien-être</h4>
-                        <p>Rejoignez-nous pour un séminaire interactif sur la gestion du stress et l'amélioration de la qualité de vie, animé par notre équipe de psychologues. <strong>Mardi 20 Juin à 18h</strong> en salle de conférence EM-204. Inscription gratuite et obligatoire.</p>
+                        <h4><i class="fas fa-calendar-check"></i> Séminaire sur la Santé Mentale et le Bien-être</h4><!--titre pour la partie-->
+                        <p>Rejoignez-nous pour un séminaire interactif sur la gestion du stress et l'amélioration de la qualité de vie. Ce sera animé par notre équipe de psychologues spécialisés. <strong>Mardi 20 Juin à 18h</strong> en salle de conférence EM-204. Inscription gratuite et obligatoire.</p><!--messsage poiur indiquer et avec un lien avec utilisateru-->
                     </div>
                 </div>
 
-                <!-- Carrousel de photos générales -->
-                <div class="general-photo-carousel">
+                <div class="general-photo-carousel"><!--ON va creer un carroussel de photo pour que ca soity plus beau-->
                     <h3>Découvrez Medicare en Images</h3>
                     <div class="carousel-container">
                         <div class="carousel-slides">
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous1.jpg" alt="Centre Médical Moderne">
-                                <p class="carousel-caption">Nos installations modernes</p>
+                                <img src="./images/carousel/photoCarous1.jpg" alt="Centre Médical Moderne"><!--On appel la photo sauvegarder-->
+                                <p class="carousel-caption">Nos installations modernes</p><!--toujours en donnant un titre-->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous2.jpg" alt="Accueil chaleureux">
-                                <p class="carousel-caption">Un accueil à votre écoute</p>
+                                <img src="./images/carousel/photoCarous2.jpg" alt="Accueil chaleureux"><!--On appel la photo sauvegarder encore-->
+                                <p class="carousel-caption">Un accueil à votre écoute</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous3.jpg" alt="Équipement de pointe">
-                                <p class="carousel-caption">Technologie de pointe</p>
+                                <img src="./images/carousel/photoCarous3.jpg" alt="Équipement de pointe"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">Technologie de pointe</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous4.jpg" alt="Salle d'attente confortable">
-                                <p class="carousel-caption">Votre confort, notre priorité</p>
+                                <img src="./images/carousel/photoCarous4.jpg" alt="Salle d'attente confortable"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">Votre confort, notre priorité</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous5.jpg" alt="Équipe médicale dévouée">
-                                <p class="carousel-caption">Une équipe dédiée à votre santé</p>
+                                <img src="./images/carousel/photoCarous5.jpg" alt="Équipe médicale dévouée"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">Une équipe dédiée à votre santé</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous6.jpg" alt="Laboratoire d'analyses">
-                                <p class="carousel-caption">Nos laboratoires d'analyses</p>
+                                <img src="./images/carousel/photoCarous6.jpg" alt="Laboratoire d'analyses"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">Nos laboratoires d'analyses</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous7.jpg" alt="Consultation en ligne">
-                                <p class="carousel-caption">La téléconsultation simplifiée</p>
+                                <img src="./images/carousel/photoCarous7.jpg" alt="Consultation en ligne"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">La téléconsultation simplifiée</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous8.jpg" alt="Soins pédiatriques">
-                                <p class="carousel-caption">Prendre soin de vos enfants</p>
+                                <img src="./images/carousel/photoCarous8.jpg" alt="Soins pédiatriques"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">Prendre soin de vos enfants</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous9.jpg" alt="Salles de consultation">
-                                <p class="carousel-caption">Des espaces adaptés à vos besoins</p>
+                                <img src="./images/carousel/photoCarous9.jpg" alt="Salles de consultation"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">Des espaces adaptés à vos besoins</p><!--un petit message pour expliquer -->
                             </div>
                             <div class="carousel-slide">
-                                <img src="./images/carousel/photoCarous10.jpg" alt="Innovation médicale">
-                                <p class="carousel-caption">L'innovation au service de votre bien-être</p>
+                                <img src="./images/carousel/photoCarous10.jpg" alt="Innovation médicale"><!--On appel la photo sauvegarde encore -->
+                                <p class="carousel-caption">L'innovation au service de votre bien-être</p><!--un petit message pour expliquer -->
                             </div>
                         </div>
-                        <button class="carousel-nav-btn prev"><</button>
-                        <button class="carousel-nav-btn next">></button>
+                        <button class="carousel-nav-btn prev"><</button><!--pour les boutons on fait un precedent pour aller sur la page precedente -->
+                        <button class="carousel-nav-btn next">></button><!--et la un pour pouvoir aller sur le truc juste avant-->
                         <div class="carousel-indicators"></div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- FIN NOUVEAU : Section Événement / Bulletin de Santé de la Semaine -->
 
-    <!-- Panneaux d'informations -->
-    <section class="info-section">
+    <section class="info-section"><!--la on change de partiee pour le visuel-->
         <div class="info-card">
-            <h3>Urgence</h3>
-            <p>Appelez-nous immédiatement pour toute urgence médicale 24/7.</p>
-            <p><strong>+33 1 23 45 67 89</strong></p>
+            <h3>Urgence</h3><!--la partie avec toutes les inforamtions du site-->
+            <p>Appelez-nous pour toute urgence médicale 24/7.</p><!--un petit message pour expliquer -->
+            <p><strong>+33 1 23 45 67 89</strong></p><!--indiquer le njmero a appekler -->
         </div>
         <div class="info-card">
-            <h3>Emploi du temps</h3>
-            <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p>
-            <a href="parcourir.php">Voir les horaires</a>
+            <h3>Emploi du temps</h3><!--in endroti pour l enploi du temps-->
+            <p>Consultez les disponibilités des médecins et réservez vos créneaux facilement.</p><!--un petit message pour expliquer ce qu il faut faire-->
+            <a href="parcourir.php">Voir les horaires</a><!--retour a la page parcourit pour voir les goraire-->
         </div>
     </section>
 
-    <?php require 'includes/footer.php'; ?>
+    <?php require 'includes/footer.php'; ?><!--on garde toujours le footer en bas de la page -->
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const carouselContainer = document.querySelector('.carousel-container');
-            if (carouselContainer) { // Vérifie si le carrousel existe sur la page
-                const carouselSlides = carouselContainer.querySelector('.carousel-slides');
+        document.addEventListener('DOMContentLoaded', function() {//ON VERIFIE ICI SI TOUT EST BON
+            const carouselContainer = document.querySelector('.carousel-container');//ON CHOSITI NOTRE CARROUSEL
+            if (carouselContainer) { //ON REGARDE SI IL EXISTE BIEN
+                const carouselSlides = carouselContainer.querySelector('.carousel-slides');//LZS SLIDES DU CARRROUSSEK
                 const slides = Array.from(carouselSlides.children);
-                const prevBtn = carouselContainer.querySelector('.carousel-nav-btn.prev');
-                const nextBtn = carouselContainer.querySelector('.carousel-nav-btn.next');
+                const prevBtn = carouselContainer.querySelector('.carousel-nav-btn.prev');//FAIT APPEL AU BOUTON POUR ALLER SUR LE TUCS AVANTT
+                const nextBtn = carouselContainer.querySelector('.carousel-nav-btn.next');//ET LA POUR ALLER SUR LE TRUC APRES
                 const indicatorsContainer = carouselContainer.querySelector('.carousel-indicators');
 
-                let currentIndex = 0;
-                let slideWidth = slides[0].clientWidth; // Largeur d'une slide
+                let currentIndex = 0;//LA SLIDE ON INIT
+                let slideWidth = slides[0].clientWidth; //LA TAILLE DE LA DKAPOSITIVE
 
-                // Mettre à jour la largeur de slide au chargement et au redimensionnement
-                function updateSlideWidth() {
+                function updateSlideWidth() {//ON EUT METTRE A JOUR
                     if (slides.length > 0) {
-                        slideWidth = slides[0].clientWidth;
-                        showSlide(currentIndex); // Réajuster la position
+                        slideWidth = slides[0].clientWidth;//ACTUALISATION
+                        showSlide(currentIndex); //ON REMET AVEC LES BONNEES DIMENSIONS
                     }
                 }
-                updateSlideWidth(); // Appel initial
-                window.addEventListener('resize', updateSlideWidth); // Gérer le redimensionnement
+                updateSlideWidth(); //POUR REMETTREN A JOUR LES INFOS
+                window.addEventListener('resize', updateSlideWidth);//ON FAIT DES REAJUSTEMENT POUR LES PHOTOS
 
-                // Créer les indicateurs
-                slides.forEach((_, i) => {
+                slides.forEach((_, i) => {//POUR METTRE DES POINTS EN BAS
                     const indicator = document.createElement('div');
                     indicator.classList.add('indicator');
                     if (i === 0) indicator.classList.add('active');
-                    indicator.addEventListener('click', () => showSlide(i));
+                    indicator.addEventListener('click', () => showSlide(i));//ON APPUIE POUR ALLER A LA SUIVANTE
                     indicatorsContainer.appendChild(indicator);
                 });
-                const indicators = Array.from(indicatorsContainer.children);
+                const indicators = Array.from(indicatorsContainer.children);//CE QUI PERMET D ACTIVER OU DESACTIVER
 
-                // Fonction pour montrer une slide spécifique
-                function showSlide(index) {
-                    // Si l'index dépasse les limites, revenir au début ou à la fin
+                function showSlide(index) {//POUR LE DEPLACEMENT DES IMAGES
                     if (index >= slides.length) {
-                        currentIndex = 0;
+                        currentIndex = 0;//ON INIT A 0
                     } else if (index < 0) {
-                        currentIndex = slides.length - 1;
+                        currentIndex = slides.length - 1; //POUR CREER BOUCLE SANS IN EN REVENANT AU DEBUT
                     } else {
-                        currentIndex = index;
+                        currentIndex = index;//SINON ON FAIT NORMALMENT EN ALLANT A LA SIUVANTE
                     }
 
-                    // Déplacer les slides
-                    carouselSlides.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
+                    carouselSlides.style.transform = `translateX(-${currentIndex * slideWidth}px)`;//POUR QUE CA AILLE DE GAUCHE A DROITRE ET PAS DE BAS EN HAUT
 
-                    // Mettre à jour les indicateurs actifs
                     indicators.forEach((ind, i) => {
-                        if (i === currentIndex) {
-                            ind.classList.add('active');
-                        } else {
-                            ind.classList.remove('active');
+                        if (i === currentIndex) {//SI C EST LA BONNE IMAGE QUI EST MONTRE
+                            ind.classList.add('active');//ON ACTIVE
+                        } else {//SINON
+                            ind.classList.remove('active');//ON ENLEVE
                         }
                     });
                 }
 
-                // Gérer les boutons Précédent/Suivant
-                prevBtn.addEventListener('click', () => showSlide(currentIndex - 1));
-                nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));
+                prevBtn.addEventListener('click', () => showSlide(currentIndex - 1));//FAIR ELE BOUTON POUR DIMIBUER
+                nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));//FAIRE AUSSI POUR POUVOIR AUGMENETR 
 
-                // Initialiser la première slide
                 showSlide(currentIndex);
 
-                // Optionnel: Auto-play
-                let autoPlayInterval = setInterval(() => showSlide(currentIndex + 1), 5000); // Change de slide toutes les 5 secondes
++                let autoPlayInterval = setInterval(() => showSlide(currentIndex + 1), 5000); //les imagess changent toutes les 5 seconds
 
-                // Pause auto-play au survol et reprise à la sortie
                 carouselContainer.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
                 carouselContainer.addEventListener('mouseleave', () => {
                     autoPlayInterval = setInterval(() => showSlide(currentIndex + 1), 5000);
@@ -207,22 +186,21 @@
 
 <style>
 
-/* --- NOUVEAU : Styles pour la Section Événement / Bulletin de Santé --- */
 .event-bulletin-section {
     padding: 2.5rem;
-    background-color: #f8f8f8; /* Fond légèrement différent du blanc pur pour la section */
+    background-color:rgb(248, 248, 248);
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    margin-bottom: 2rem; /* Espace avant la section suivante */
-    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 2rem; 
+    border-bottom: 1px solidrgb(224, 224, 224);
 }
 
 .event-bulletin-container {
-    max-width: 1200px; /* Largeur maximale du contenu */
+    max-width: 1200px;
     width: 100%;
     margin: auto;
-    background: #fff; /* Fond blanc pour le conteneur interne */
+    background: #fff; 
     padding: 2.5rem;
     border-radius: 10px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
@@ -231,7 +209,7 @@
 }
 
 .event-bulletin-container .section-title {
-    color: #0a7abf; /* Couleur principale du thème */
+    color:rgb(10, 122, 191); 
     margin-bottom: 1.5rem;
     font-size: 2.2rem;
     font-weight: 700;
@@ -247,18 +225,17 @@
 
 .content-wrapper {
     display: flex;
-    flex-wrap: wrap; /* Permet aux blocs de passer à la ligne sur mobile */
-    gap: 2rem; /* Espace entre les deux colonnes (Actualités et Carrousel) */
+    flex-wrap: wrap;
+    gap: 2rem; 
     justify-content: center;
-    align-items: flex-start; /* Align les éléments en haut */
+    align-items: flex-start; 
 }
 
-/* Bloc des actualités/événements textuels */
 .health-news-block {
-    flex: 2; /* Prend plus d'espace que le carrousel (2/3 vs 1/3) */
-    min-width: 350px; /* Largeur minimale avant de passer à la ligne */
-    background-color: #f0f7ff; /* Fond bleu clair */
-    border: 1px solid #cce0ff;
+    flex: 2; 
+    min-width: 350px; 
+    background-color:rgb(240, 247, 255); 
+    border: 1px solidrgb(204, 224, 255);
     border-radius: 8px;
     padding: 1.5rem;
     text-align: left;
@@ -266,35 +243,35 @@
 }
 
 .health-news-block h3 {
-    color: #0056b3; /* Bleu foncé pour le titre */
+    color:rgb(0, 86, 179);
     font-size: 1.5rem;
     margin-top: 0;
     margin-bottom: 1.5rem;
-    border-bottom: 1px dashed #a8cfff;
+    border-bottom: 1px dashedrgb(168, 207, 255);
     padding-bottom: 0.8rem;
 }
 
 .news-item {
     margin-bottom: 1.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px dotted #d1e7ff; /* Séparateur léger entre les actus */
+    border-bottom: 1px dottedrgb(209, 231, 255);
 }
 .news-item:last-child {
-    border-bottom: none; /* Pas de séparateur après le dernier élément */
+    border-bottom: none; 
     margin-bottom: 0;
     padding-bottom: 0;
 }
 
 .news-item h4 {
-    color: #0a7abf;
+    color:rgb(10, 122, 191);
     font-size: 1.1rem;
     margin-top: 0;
     margin-bottom: 0.5rem;
 }
 
-.news-item i { /* Icônes Font Awesome si utilisées */
+.news-item i { 
     margin-right: 8px;
-    color: #007bff;
+    color:rgb(0, 123, 255);
 }
 
 .news-item p {
@@ -307,7 +284,7 @@
     display: inline-block;
     margin-top: 1.5rem;
     padding: 10px 20px;
-    background-color: #0a7abf;
+    background-color:rgb(10, 122, 191);
     color: white;
     text-decoration: none;
     border-radius: 5px;
@@ -315,16 +292,14 @@
     transition: background-color 0.3s ease;
 }
 .btn-more-news:hover {
-    background-color: #075c92;
+    background-color:rgb(7, 92, 146);
 }
 
-
-/* Styles du Carrousel de Photos Générales */
 .general-photo-carousel {
-    flex: 1; /* Prend 1/3 de l'espace */
-    min-width: 300px; /* Largeur minimale */
-    background-color: #fdfdfd;
-    border: 1px solid #e0e0e0;
+    flex: 1; 
+    min-width: 300px;
+    background-color:white;
+    border: 1px solid white;
     border-radius: 8px;
     padding: 1.5rem;
     text-align: center;
@@ -332,29 +307,29 @@
 }
 
 .general-photo-carousel h3 {
-    color: #007bff;
+    color:rgb(0, 123, 255);
     font-size: 1.5rem;
     margin-top: 0;
     margin-bottom: 1.5rem;
-    border-bottom: 1px dashed #b8daff;
+    border-bottom: 1px dashedrgb(184, 218, 255);
     padding-bottom: 0.8rem;
 }
 
 .carousel-container {
     position: relative;
     width: 100%;
-    overflow: hidden; /* Cache ce qui dépasse */
+    overflow: hidden; 
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .carousel-slides {
     display: flex;
-    transition: transform 0.5s ease-in-out; /* Animation de transition */
+    transition: transform 0.5s ease-in-out;
 }
 
 .carousel-slide {
-    min-width: 100%; /* Chaque slide prend 100% de la largeur du conteneur */
+    min-width: 100%; 
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -362,21 +337,19 @@
     justify-content: center;
     padding: 1rem;
     background-color: #fff;
-    flex-shrink: 0; /* Empêche les slides de rétrécir */
+    flex-shrink: 0; 
 }
 
 .carousel-slide img {
-    /* Les images ici sont des photosCarous, qui ne sont pas nécessairement rondes. */
-    /* On les laisse rectangulaires mais bien contenues dans leur espace. */
     max-width: 100%;
-    max-height: 250px; /* Limiter la hauteur des images pour qu'elles ne soient pas trop grandes */
+    max-height: 250px; 
     height: auto;
-    width: auto; /* Permet à l'image de conserver son ratio */
-    border-radius: 8px; /* Coins légèrement arrondis pour les images */
-    border: 1px solid #ddd; /* Bordure subtile */
+    width: auto;
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
     margin-bottom: 1rem;
-    object-fit: cover; /* Recouvre le cadre en coupant si nécessaire */
-    aspect-ratio: 16 / 9; /* Si toutes tes images sont 16:9, ça les rendra uniformes */
+    object-fit: cover; 
+    aspect-ratio: 16 / 9; 
 }
 
 .carousel-caption {
@@ -435,27 +408,27 @@
 }
 
 .indicator.active {
-    background-color: #0a7abf;
-    border-color: #0a7abf;
+    background-color:rgb(10, 122, 191);
+    border-color:rgb(10, 122, 191);
 }
 
-/* Media Queries pour la responsivité */
-@media (max-width: 992px) { /* Ajusté le breakpoint pour la flex wrap */
+
+@media (max-width: 992px) { 
     .content-wrapper {
-        flex-direction: column; /* Les blocs s'empilent sur les écrans intermédiaires */
+        flex-direction: column; 
         gap: 1.5rem;
     }
     .health-news-block,
     .general-photo-carousel {
-        flex: none; /* Annule le flex: 1 */
-        width: 100%; /* Prend toute la largeur disponible */
-        max-width: none; /* Annule le max-width si défini */
+        flex: none; 
+        width: 100%; 
+        max-width: none;
     }
     .event-bulletin-container {
         padding: 1.5rem;
     }
     .general-photo-carousel img {
-        max-height: 200px; /* Un peu moins haut sur les écrans intermédiaires */
+        max-height: 200px; 
     }
 }
 
@@ -464,7 +437,7 @@
         font-size: 1.8rem;
     }
     .general-photo-carousel img {
-        max-height: 150px; /* Encore moins haut sur les très petits écrans */
+        max-height: 150px; 
     }
 }
 </style>
